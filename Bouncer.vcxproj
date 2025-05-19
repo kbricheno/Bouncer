@@ -139,7 +139,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AudioComponent.cpp" />
     <ClCompile Include="Bouncer.cpp" />
+    <ClCompile Include="CharacterController.cpp" />
+    <ClCompile Include="Level.cpp" />
+    <ClCompile Include="PhysicsComponent.cpp" />
+    <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="VisualComponent.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AudioComponent.h" />
+    <ClInclude Include="CharacterController.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Level.h" />
+    <ClInclude Include="PhysicsComponent.h" />
+    <ClInclude Include="ControllerComponent.h" />
+    <ClInclude Include="GameManager.h" />
+    <ClInclude Include="VisualComponent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
