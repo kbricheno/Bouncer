@@ -1,32 +1,37 @@
 #pragma once
 
-#include <vector>
-
 #include <SFML/Graphics.hpp>
 
 #include "GameObject.h"
-#include "ControllerComponent.h"
+#include "CharacterController.h"
 #include "PhysicsComponent.h"
 #include "VisualComponent.h"
 #include "AudioComponent.h"
 
 class Level {
 public:
-	Level(sf::RenderWindow* window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> levelPlan);
+	Level(sf::RenderWindow* const window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> &levelPlan);
+	~Level() {}
 
-	const int GetLevelId() { return levelId_; }
 	void Update();
 
-private:	
-	int levelId_;
+	int GetLevelId() const { return levelId_; }
+	GameObject GetGameObject(int index) { return gameObjects_[index]; }
+	VisualComponent GetVisualComponent(int index) { return visualComponents_[index]; }
+
+private:
+	int levelId_ = 0;
 
 	sf::RenderWindow* window_ = nullptr;
 
 	std::vector<GameObject> gameObjects_;
-	std::vector<ControllerComponent> controllerComponents_;
-	std::vector<PhysicsComponent> physicsComponents_;
+	std::vector<CharacterController> characterControllers_;
+	//std::vector<PhysicsComponent> physicsComponents_;
 	std::vector<VisualComponent> visualComponents_;
 	std::vector<AudioComponent> audioComponents_;
 
+	bool firstUpdate_;
+
+	std::vector<sf::Texture> wallTextures_;
 	std::vector<sf::Sprite> wallSprites_;
 };

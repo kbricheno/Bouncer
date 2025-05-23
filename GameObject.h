@@ -1,33 +1,39 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
-#include "ControllerComponent.h"
-#include "PhysicsComponent.h"
-#include "VisualComponent.h"
-#include "AudioComponent.h"
+class ControllerComponent;
+class PhysicsComponent;
+class VisualComponent;
+class AudioComponent;
 
 class GameObject {
 public:
-	GameObject(sf::Vector2i position, VisualComponent* visualComponent);
-	GameObject(sf::Vector2i position,
-		sf::Vector2f direction = sf::Vector2f(0, 0),
-		ControllerComponent* controllerComponent = nullptr,
-		PhysicsComponent* physicsComponent = nullptr,
-		VisualComponent* visualComponent = nullptr,
-		AudioComponent* audioComponent = nullptr);
+	GameObject(const sf::Vector2f position, const sf::Vector2f direction = { 0, 0 }, int visualComponentIndex = -1) : 
+		position_(position), 
+		direction_(direction), 
+		visualComponentIndex_(visualComponentIndex) 
+	{ dead_ = false; }
+
+	int GetVisualComponentIndex() const { return visualComponentIndex_; }
+
+	void SetComponents(//const ControllerComponent* controllerComponent = nullptr,
+					   //const PhysicsComponent* physicsComponent = nullptr,
+					   VisualComponent* visualComponent = nullptr
+					   /*const AudioComponent* audioComponent = nullptr*/);
+
+	sf::Vector2f GetPosition() const { return position_; }
 
 private:
 	bool dead_;
 
-	sf::Vector2i position_;
+	sf::Vector2f position_;
 	sf::Vector2f direction_;
+	int visualComponentIndex_;
 
-	//std::vector<sf::Sprite> animations;
-	//std::vector<sf::SoundBuffer> soundEffects;
-
-	ControllerComponent* controllerComponent_;
-	PhysicsComponent* physicsComponent_;
-	VisualComponent* visualComponent_;
-	AudioComponent* audioComponent_;
+	ControllerComponent* controllerComponent_ = nullptr;
+	PhysicsComponent* physicsComponent_ = nullptr;
+	VisualComponent* visualComponent_ = nullptr;
+	AudioComponent* audioComponent_ = nullptr;
 
 };
+

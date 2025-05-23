@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 
 class PhysicsComponent{
+public:
 	enum class ColliderType {
 		NONE,
 		PLAYER,
@@ -13,15 +14,14 @@ class PhysicsComponent{
 		WALL
 	};
 
-public:
 	PhysicsComponent(ColliderType type, sf::FloatRect hitbox) : type_(type), hitbox_(hitbox) {};
 	~PhysicsComponent() {}
 
 	void Update();
 
-	const sf::FloatRect GetRect() { return hitbox_; }
-	const ColliderType GetType() { return type_; }
-	ColliderType ResolveCollisions(std::vector<PhysicsComponent*> otherColliders);
+	sf::FloatRect GetRect() const { return hitbox_; }
+	ColliderType GetType() const { return type_; }
+	//ColliderType ResolveCollisions(std::vector<PhysicsComponent*> otherColliders);
 
 private:
 	const ColliderType type_;

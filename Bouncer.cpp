@@ -8,22 +8,36 @@
 #include <SFML/Window.hpp>
 #include "GameManager.h"
 
-GameManager gm;
-
-sf::VideoMode vMode(gm.GetScreenDimensions());
-sf::RenderWindow window(vMode, "Bouncer", sf::Style::Close);
-
-std::ifstream levelsFile("Assets/levels.txt");
-
-//debug text
-sf::Font f("Assets/UI/AGENCYR.ttf");
-sf::Text debugText(f);
-
-
 int main()
 {
+    std::vector<AudioComponent> audioComponents_;
+    std::vector<GameObject> gameObjects_;
+
+    GameManager gm;
+
+    sf::VideoMode vMode(gm.GetScreenDimensions());
+    sf::RenderWindow window(vMode, "Bouncer", sf::Style::Close);
+
+    std::ifstream levelsFile("Assets/levels.txt");
+
+    //debug text
+    sf::Font f("Assets/UI/AGENCYR.ttf");
+    sf::Text debugText(f);
+
     gm.SetupWindow(&window);
     gm.ReadLevels(levelsFile);
+
+    for (int i = 0; i < 10; i++)
+    {
+        AudioComponent ac;
+        GameObject obj({ 69, 69 });
+
+        ac.SetGameObject(&obj);
+
+        audioComponents_.push_back(ac);
+
+        //std::cout << "stored ac: " << & audioComponents_.back() << "\n"; // all different to looped ac addresses
+    }
 
     while (window.isOpen()) 
     {
@@ -47,12 +61,17 @@ int main()
         }
 
 
+
+        for (int i = 0; i < audioComponents_.size(); i++)
+        {
+            //std::cout << "looped ac: " << &audioComponents_[i] << ": " << audioComponents_[i].GetGameObject()->GetPosition().x << "\n";
+        }
+
         // update
         debugText.setFont(f);
         debugText.setCharacterSize(50);
         debugText.setPosition({ 500, 500 });
         debugText.setString("");
-
 
         // draw
         window.clear(sf::Color::White);
