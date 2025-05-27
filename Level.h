@@ -13,11 +13,16 @@ public:
 	Level(sf::RenderWindow* const window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> &levelPlan);
 	~Level() {}
 
-	void Update();
+	void HandleInput();
+	void Update(float deltaTime);
+	void Draw();
 
 	int GetLevelId() const { return levelId_; }
 	GameObject GetGameObject(int index) { return gameObjects_[index]; }
+	CharacterController GetCharacterController(int index) { return characterControllers_[index]; }
+	PhysicsComponent GetPhysicsComponent(int index) { return physicsComponents_[index]; }
 	VisualComponent GetVisualComponent(int index) { return visualComponents_[index]; }
+	AudioComponent GetAudioComponent(int index) { return audioComponents_[index]; }
 
 private:
 	int levelId_ = 0;
@@ -26,7 +31,7 @@ private:
 
 	std::vector<GameObject> gameObjects_;
 	std::vector<CharacterController> characterControllers_;
-	//std::vector<PhysicsComponent> physicsComponents_;
+	std::vector<PhysicsComponent> physicsComponents_;
 	std::vector<VisualComponent> visualComponents_;
 	std::vector<AudioComponent> audioComponents_;
 

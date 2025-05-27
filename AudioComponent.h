@@ -4,9 +4,10 @@
 
 class AudioComponent {
 public:
-	AudioComponent() {}
+	AudioComponent(int const objIndex) : objIndex_(objIndex) {}
 	~AudioComponent() {}
 
+	int GetGameObjectIndex() const { return objIndex_; }
 	void SetGameObject(GameObject* const obj) { obj_ = obj; }
 	GameObject* GetGameObject() const { return obj_; }
 
@@ -14,4 +15,6 @@ public:
 
 private:
 	GameObject* obj_ = nullptr;
+
+	int const objIndex_;
 };

@@ -13,7 +13,10 @@ public:
 
 	void SetupWindow(sf::RenderWindow* const window);
 	void ReadLevels(std::ifstream& const levelsFile);
-	void Update();
+
+	void HandleInput();
+	void Update(float deltaTime);
+	void Draw();
 
 	// getters
 	sf::Vector2u const GetScreenDimensions() const { return sf::Vector2u(screenWidth_, screenHeight_); }
@@ -25,8 +28,8 @@ private:
 	static bool instantiated_;
 
 	sf::RenderWindow *window_ = nullptr;
-	int const screenWidth_ = 960;
-	int const screenHeight_ = 540;
+	int const screenWidth_ = /*960*/1920;
+	int const screenHeight_ = /*540*/1080;
 	int const tileSize_ = 100;
 
 	bool running_ = true;

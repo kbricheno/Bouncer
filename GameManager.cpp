@@ -28,17 +28,29 @@ void GameManager::ReadLevels(std::ifstream& const levelsFile) {
     allLevels_.push_back(currentLevel);
 }
 
-void GameManager::Update() {    
+void GameManager::HandleInput() {
+    if (currentLevel_.size() > 0) {
+        currentLevel_[0].HandleInput();
+    }
+}
+
+void GameManager::Update(float deltaTime) {    
     if (levelCleared_) {
         // if a level already exists, the next level's id will be the current one + 1, otherwise we're about to create level 0
         int nextLevelId = currentLevel_.size() > 0 ? currentLevel_[0].GetLevelId() + 1 : 0;
         
-        Level nextLevel(window_, nextLevelId, tileSize_, 5, 5, allLevels_[nextLevelId]);
+        Level nextLevel(window_, nextLevelId, tileSize_, 10, 10, allLevels_[nextLevelId]);
         currentLevel_.push_back(nextLevel);
         
         levelCleared_ = false;
     }
     else {
-        currentLevel_[0].Update();
+        currentLevel_[0].Update(deltaTime);
+    }
+}
+
+void GameManager::Draw() {
+    if (currentLevel_.size() > 0) {
+        currentLevel_[0].Draw();
     }
 }

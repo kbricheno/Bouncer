@@ -1,7 +1,7 @@
 #pragma once
-#include <vector>
 
 #include <SFML/Graphics.hpp>
+#include "GameObject.h"
 
 class PhysicsComponent{
 public:
@@ -14,16 +14,42 @@ public:
 		WALL
 	};
 
-	PhysicsComponent(ColliderType type, sf::FloatRect hitbox) : type_(type), hitbox_(hitbox) {};
+	PhysicsComponent(int const objIndex,
+		ColliderType const type,
+		sf::FloatRect const collider,
+		sf::FloatRect const hitbox = sf::FloatRect({ 0,0 }, { 0, 0 }),
+		float const speed = 0.f)
+		:
+		objIndex_(objIndex), 
+		type_(type), 
+		collider_(collider),
+		hitbox_(hitbox),
+		speed_(speed)
+	{}
 	~PhysicsComponent() {}
 
-	void Update();
+	int GetGameObjectIndex() const { return objIndex_; }
+	void SetGameObject(GameObject* const obj) { obj_ = obj; }
+	GameObject* GetGameObject() const { return obj_; }
 
-	sf::FloatRect GetRect() const { return hitbox_; }
-	ColliderType GetType() const { return type_; }
-	//ColliderType ResolveCollisions(std::vector<PhysicsComponent*> otherColliders);
+	void Update(float deltaTime, std::vector<PhysicsComponent>& const allColliders);
+
+	//movement & collision checking
+	void Move(float deltaTime, std::vector<PhysicsComponent>& const allColliders);
+	void ResolveCollisions(bool xAxis, std::vector<PhysicsComponent>& const allColliders);
+	void ResolveInteraction(std::vector<PhysicsComponent>& const allColliders);
+
+	//getters
+	ColliderType const GetType() const { return type_; }
+	sf::FloatRect GetCollider() const { return collider_; }
+	sf::FloatRect GetHitbox() const { return hitbox_; }
 
 private:
-	const ColliderType type_;
-	const sf::FloatRect hitbox_;
+	GameObject* obj_ = nullptr;
+
+	int const objIndex_;
+	ColliderType const type_;
+	sf::FloatRect collider_;
+	sf::FloatRect hitbox_;
+	int const speed_;
 };
