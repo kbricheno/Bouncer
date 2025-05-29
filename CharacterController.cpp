@@ -1,8 +1,16 @@
 #include "CharacterController.h"
 
-void CharacterController::Update(GameObject &obj) {
+void CharacterController::Update(GameObject &obj, float const deltaTime) {
+    //handle events and key presses
     HandleInput(obj);
-    UpdateDirection(obj);
+    timeSinceLastShot += deltaTime;
+
+    //update the GameObject's direction_ variable based on the handled input (keys pressed)
+    obj.SetDirection(CalculateDirection());
+    //update the GameObject's rotation_ variable based on the handled input (mouse position, obj position)
+    obj.SetRotation(CalculateRotation(obj.GetPosition()));
+    //update the GameObject's currentAnimation_ variable based on the handled input (state) 
+    obj.SetCurrentAnimation(CalculateAnimation());
 }
 
 void CharacterController::HandleInput(GameObject &obj) {
@@ -28,7 +36,13 @@ void CharacterController::HandleInput(GameObject &obj) {
                 ReloadCommand();
             }
         }
-        //mouse click input here
+        else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>())
+        {
+            if (mouseButtonPressed->button == sf::Mouse::Button::Left)
+            {
+                ShootCommand();
+            }
+        }
     }
 
     //avoid using Event::KeyPressed for movement because when a key is held, its events are generated with a significant delay
@@ -68,22 +82,9 @@ void CharacterController::HandleInput(GameObject &obj) {
     {
         moveRight_ = false;
     }
-
-    //get the mouse position in screen space
-    sf::Vector2i mousePos = sf::Mouse::getPosition();
-    //get the screen dimensions
-    sf::Vector2u screenRes = sf::VideoMode::getDesktopMode().size;
-    //calculate the vector between the player and mouse
-    sf::Vector2f relativePos = { mousePos.x - (obj.GetPosition().x + screenRes.x / 2), mousePos.y - (obj.GetPosition().y - screenRes.y / 2) };
-    //convert the vector into an angle (radians)
-    float lookAtMouseRad = -atan2(relativePos.y, relativePos.x);
-    //convert the angle into degrees
-    float lookAtMouseDeg = lookAtMouseRad * 180 / 1.141f;
-    sf::Angle characterAngle = sf::degrees(lookAtMouseDeg);
-    obj.SetRotation(characterAngle);
 }
 
-void CharacterController::UpdateDirection(GameObject &obj) {
+sf::Vector2f CharacterController::CalculateDirection() {
     //start by setting the direction values to zero
     float newDirX = 0, newDirY = 0;
     
@@ -93,22 +94,64 @@ void CharacterController::UpdateDirection(GameObject &obj) {
     if (moveLeft_) newDirX--;
     if (moveRight_) newDirX++;
 
-    //set the GameObject's direction variable
-    obj.SetDirection({ newDirX, newDirY });
-    
-    //update the GameObject's current animation variable
-    if (sf::Vector2f(newDirX, newDirY).lengthSquared() == 0) //if there's no direction (no input), set the animation to idle
+    if (sf::Vector2f{ newDirX, newDirY }.lengthSquared() == 0) //if there's no direction (no input), character is idling
     {
-        obj.SetCurrentAnimation(0);
+        state_ = CharacterState::IDLING;
     }
-    else //if there's direction (input), set the animation to walking
-    { 
-        obj.SetCurrentAnimation(1); 
+    else //if there's direction (input), character is walking
+    {
+        state_ = CharacterState::WALKING;
+    }
+
+    return { newDirX, newDirY };
+}
+
+int CharacterController::CalculateAnimation() {
+    switch (state_)
+    {
+    case CharacterController::CharacterState::IDLING:
+        return 0;
+        break;
+    case CharacterController::CharacterState::WALKING:
+        return 1;
+        break;
+    case CharacterController::CharacterState::SHOOTING:
+        return 2;
+        break;
+    case CharacterController::CharacterState::RELOADING:
+        return 3;
+        break;
+    default:
+        break;
     }
 }
 
-void CharacterController::ShootCommand() {
+sf::Angle CharacterController::CalculateRotation(sf::Vector2f objPosition) {
+    //get the mouse position in the window (in screen space)
+    sf::Vector2i mousePos = sf::Mouse::getPosition(*window_);
 
+    //calculate the vector between the player and mouse
+    sf::Vector2f relativePos = { mousePos.x - objPosition.x, mousePos.y - (objPosition.y) };
+
+    //convert the vector into an angle (radians)
+    float lookAtMouse = atan2(relativePos.y, relativePos.x);
+
+    //convert the angle from a float to a sf::Angle
+    sf::Angle characterAngle = sf::radians(lookAtMouse);
+
+    //update the GameObject's rotation_ variable
+    return characterAngle;
+}
+
+void CharacterController::ShootCommand() {
+    //prevent bullet spam
+    if (timeSinceLastShot < timeBetweenShots) return;
+
+    //prevent shooting when out of bullets (add UI message here)
+    if (characterCurrentBullets <= 0) return;
+
+    timeSinceLastShot = 0;
+    //tell Level to spawn a bullet using obj direction & obj position -- how to do this without creating a circular dependency?
 }
 
 void CharacterController::ReloadCommand() {

@@ -6,6 +6,13 @@
 
 class CharacterController : public ControllerComponent {
 public:
+	enum class CharacterState {
+		IDLING,
+		WALKING,
+		SHOOTING,
+		RELOADING
+	};
+
 	CharacterController(int const objIndex, sf::RenderWindow* const window) : objIndex_(objIndex), window_(window) 
 	{
 		window_->setKeyRepeatEnabled(false);
@@ -18,18 +25,29 @@ public:
 
 	int GetGameObjectIndex() const { return objIndex_; }
 
-	void Update(GameObject &obj);
+	void Update(GameObject &obj, float const deltaTime);
 
 	void HandleInput(GameObject &obj);
-	void UpdateDirection(GameObject &objt);
+	sf::Vector2f CalculateDirection();
+	sf::Angle CalculateRotation(sf::Vector2f objDirection);
+	int CalculateAnimation();
 	void ShootCommand();
 	void ReloadCommand();
 	void ButtonClickCommand();
 
 private:
 	int const objIndex_;
-
 	sf::RenderWindow* window_;
 
+	//movement
 	bool moveUp_, moveDown_, moveLeft_, moveRight_;
+
+	//shooting/reloading
+	int const characterMaxBullets = 6;
+	float const timeBetweenShots = 0.5f;
+	int characterCurrentBullets = 6;
+	float timeSinceLastShot = 0.f;
+
+	//animation
+	CharacterState state_ = CharacterState::IDLING;
 };
