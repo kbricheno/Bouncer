@@ -15,8 +15,8 @@ public:
 	void ReadLevels(std::ifstream& const levelsFile);
 
 	void HandleInput();
-	void Update(float deltaTime);
-	void Draw();
+	void Update(float const deltaTime);
+	void Draw(float const deltaTime);
 
 	// getters
 	sf::Vector2u const GetScreenDimensions() const { return sf::Vector2u(screenWidth_, screenHeight_); }

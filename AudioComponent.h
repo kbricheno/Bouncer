@@ -8,13 +8,9 @@ public:
 	~AudioComponent() {}
 
 	int GetGameObjectIndex() const { return objIndex_; }
-	void SetGameObject(GameObject* const obj) { obj_ = obj; }
-	GameObject* GetGameObject() const { return obj_; }
 
-	void Update();
+	void Update(GameObject& obj);
 
 private:
-	GameObject* obj_ = nullptr;
-
 	int const objIndex_;
 };

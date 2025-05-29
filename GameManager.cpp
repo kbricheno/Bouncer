@@ -34,7 +34,7 @@ void GameManager::HandleInput() {
     }
 }
 
-void GameManager::Update(float deltaTime) {    
+void GameManager::Update(float const deltaTime) {    
     if (levelCleared_) {
         // if a level already exists, the next level's id will be the current one + 1, otherwise we're about to create level 0
         int nextLevelId = currentLevel_.size() > 0 ? currentLevel_[0].GetLevelId() + 1 : 0;
@@ -49,8 +49,8 @@ void GameManager::Update(float deltaTime) {
     }
 }
 
-void GameManager::Draw() {
+void GameManager::Draw(float const deltaTime) {
     if (currentLevel_.size() > 0) {
-        currentLevel_[0].Draw();
+        currentLevel_[0].Draw(deltaTime);
     }
 }

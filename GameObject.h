@@ -22,6 +22,7 @@ public:
 	{}
 	~GameObject() {}
 
+	//getters used to assign pointers to the correct Components after construction is complete
 	int GetControllerIndex() const { return controllerComponentIndex_; }
 	int GetPhysicsIndex() const { return physicsComponentIndex_; }
 	int GetVisualIndex() const { return visualComponentIndex_; }
@@ -32,17 +33,27 @@ public:
 					   VisualComponent* const visualComponent = nullptr,
 					   AudioComponent* const audioComponent = nullptr);
 
+	//getters and setters for variables used by Components
 	sf::Vector2f GetPosition() const { return position_; }
 	void SetPosition(sf::Vector2f position) { position_ = position; }
 
 	sf::Vector2f GetDirection() const { return direction_; }
 	void SetDirection(sf::Vector2f direction) { direction_ = direction; }
 
+	sf::Angle GetRotation() const { return rotation_; }
+	void SetRotation(sf::Angle rotation) { rotation_ = rotation; }
+
+	int GetCurrentAnimation() const { return currentAnimation_; }
+	void SetCurrentAnimation(int currentAnimation) { currentAnimation_ = currentAnimation; }
+
 private:
 	bool dead_ = false;
 
 	sf::Vector2f position_;
 	sf::Vector2f direction_ = { 0,0 };
+	int currentAnimation_ = 0;
+	sf::Angle rotation_ = sf::degrees(0);
+
 	int const controllerComponentIndex_;
 	int const physicsComponentIndex_;
 	int const visualComponentIndex_;

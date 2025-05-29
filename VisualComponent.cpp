@@ -1,21 +1,30 @@
 #include "VisualComponent.h"
 #include <iostream>
 
-void VisualComponent::Update() {
-	if (obj_ != nullptr) 
+void VisualComponent::Update(GameObject &obj, float const deltaTime) {
+	timeElapsedSinceLastFrame_ += deltaTime;
+		
+	//if a new animation just started, play it from frame 0
+	if (lastAnimation_ != obj.GetCurrentAnimation()) 
 	{
-		//std::cout << "obj " << &obj_ << " pos: " << obj_->GetPosition().x << ", " << obj_->GetPosition().y << "\n";
-		for (int i = 0; i < sprites_.size(); i++)
+		currentFrame_ = 0;
+		lastAnimation_ = obj.GetCurrentAnimation();
+	}
+	//otherwise, check if it's time to increment the current frame
+	else 
+	{
+		if (timeElapsedSinceLastFrame_ >= (float)1/animationFrameRate) //1/animationFrameRate gives seconds per frame
 		{
-			//std::cout << "sprite pos: " << sprites_[i].getPosition().x << ", " << sprites_[i].getPosition().y << "\n";
-			//std::cout << "sprite tex: " << sprites_[i].getTexture().getSize().x << "\n";
-
-			//properly assign the Sprite's Texture (why doesn't the Texture reference it was constructed with still exist?)
-			sprites_[i].setTexture(textures_[i]);
-			
-			//move and draw the Sprite
-			sprites_[i].setPosition(obj_->GetPosition());
-			window_->draw(sprites_[i]);
+			//increment currentFrame by 1 modulo the number of frames in the currently playing animation
+			currentFrame_ = (currentFrame_ + 1) % animations_[obj.GetCurrentAnimation()].size();
+			timeElapsedSinceLastFrame_ = 0;
 		}
 	}
+	sprite_.setTexture(animations_[obj.GetCurrentAnimation()][currentFrame_]);
+			
+	//move and draw the Sprite
+	sprite_.setPosition(obj.GetPosition());
+	sprite_.setRotation(obj.GetRotation());
+
+	window_->draw(sprite_);
 }

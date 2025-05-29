@@ -1,5 +1,5 @@
 #include "AudioComponent.h"
 
-void AudioComponent::Update() {
+void AudioComponent::Update(GameObject &obj) {
 
 }

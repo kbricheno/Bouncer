@@ -7,12 +7,10 @@ Level::Level(sf::RenderWindow* const window, const int levelId, const int tileSi
 	window_ = window;
 	firstUpdate_ = true;
 
-	//create wall Textures & Sprites, store them in vector (here rather than on a GameObject or Component so we only create 1 set of each Texture/Sprite for the entire level)
-	wallTextures_.push_back(sf::Texture("Assets/Environment/wall.png"));
-	wallSprites_.push_back(sf::Sprite(wallTextures_.back())); //Texture assignment here won't work but can't create a Sprite without passing a Texture to the constructor
+	GenerateTexturesAndSprites();
 
-	//create other Textures & Sprites here
-
+	//keep a record of the number of each element we're spawning
+	int numWalls = 0, numEnemies = 0, numDoors = 0;
 
 	//create all the level GameObjects and Components
 	int currentX = 0, currentY = 0;
@@ -23,16 +21,21 @@ Level::Level(sf::RenderWindow* const window, const int levelId, const int tileSi
 		{
 			//create GameObject, pass in its position, direction, and the index where its (visual) Component will be (current size of the Component vector)
 			GameObject wallObj(position, -1, physicsComponents_.size(), visualComponents_.size(), -1); 
+			
+			//create a new Sprite for this wall
+			wallSprites_.push_back(sf::Sprite(wallAnimations_.front().front()));
 
-			//create visual Component, pass in the index where its GameObject will be (current size of the GameObject vector) pointer to window, references to its Textures & Sprites
-			//gameobject index is used to assign a pointer to this Component's GameObject later -- can't assign the pointer during this loop because the GameObject is in local scope
-			VisualComponent vComp(gameObjects_.size(), window_, wallTextures_, wallSprites_);
+			//create visual Component, pass in the index where its GameObject will be (current size of the GameObject vector) pointer to window, references to its Textures & Sprite
+			//gameobject index is used to assign a pointer to this Component's GameObject later -- can't assign the pointer during this loop because the GameObject is in local scope			
+			VisualComponent vComp(gameObjects_.size(), window_, wallAnimations_, wallSprites_[numWalls]);
 			PhysicsComponent pComp(gameObjects_.size(), PhysicsComponent::ColliderType::WALL, wallSprites_[0].getLocalBounds());
 
 			//store the GameObject and Component in this level instance
 			gameObjects_.push_back(wallObj);
 			visualComponents_.push_back(vComp);
 			physicsComponents_.push_back(pComp);
+
+			numWalls++;
 
 			/* still can't assign the GameObject and Component pointers
 			because even though the object and Component are now stored 
@@ -43,8 +46,11 @@ Level::Level(sf::RenderWindow* const window, const int levelId, const int tileSi
 		if (levelPlan[i] == 'P') {
 			GameObject playerObj(position, characterControllers_.size(), physicsComponents_.size(), visualComponents_.size(), -1);
 		
+			//create a player Sprite with any old texture (Texture assignment will be handled by the VisualComponent)
+			playerSprites_.push_back(sf::Sprite(playerAnimations_.front().front()));
+
 			CharacterController cComp(gameObjects_.size(), window_);
-			VisualComponent vComp(gameObjects_.size(), window_, wallTextures_, wallSprites_);
+			VisualComponent vComp(gameObjects_.size(), window_, playerAnimations_, playerSprites_[0]);
 			PhysicsComponent pComp(gameObjects_.size(), PhysicsComponent::ColliderType::PLAYER, wallSprites_[0].getLocalBounds(), wallSprites_[0].getLocalBounds(), 500.f);
 
 			gameObjects_.push_back(playerObj);
@@ -64,65 +70,89 @@ Level::Level(sf::RenderWindow* const window, const int levelId, const int tileSi
 	addresses *still* change between here and Update() */
 }
 
+//create all Textures & Sprites, store them in vector (here rather than on a GameObject or Component so we only create 1 set of each Texture/Sprite for the entire level)
+void Level::GenerateTexturesAndSprites() {
+	
+	//player animations
+	//create vectors representing individual animations -- each will hold a number of frames (images) making up the animation
+	std::vector<sf::Texture> playerIdleTextures_;
+	std::vector<sf::Texture> playerWalkTextures_;
+	std::vector<sf::Texture> playerShootTextures_;
+	std::vector<sf::Texture> playerReloadTextures_;
+
+	//create a string we can use to generate each frame's file path (frames are saved as numbers in a folder)
+	std::string fileName = "";
+
+	//loop through the number of frames in the first animation, idle
+	for (int i = 1; i <= 5; i++)
+	{
+		//create the frame's file path using the iterator to determine the current frame
+		fileName = "Assets/Player/idle/" + std::to_string(i) + ".png";
+
+		//create a Texture using the generated file path and immediately store it in the relevant animation vector
+		playerIdleTextures_.push_back(sf::Texture(fileName));
+	}
+
+	//store the animation in the Level's vector of player animations
+	playerAnimations_.push_back(playerIdleTextures_);
+
+	//repeat the process for the walking animation
+	for (int i = 1; i <= 5; i++)
+	{
+		fileName = "Assets/Player/walk/" + std::to_string(i) + ".png";
+		playerWalkTextures_.push_back(sf::Texture(fileName));
+	}
+	playerAnimations_.push_back(playerWalkTextures_);
+
+	//shooting
+	for (int i = 1; i <= 3; i++)
+	{
+		fileName = "Assets/Player/shoot/" + std::to_string(i) + ".png";
+		playerShootTextures_.push_back(sf::Texture(fileName));
+	}
+	playerAnimations_.push_back(playerShootTextures_);
+
+	//reloading
+	for (int i = 1; i <= 8; i++)
+	{
+		fileName = "Assets/Player/reload/" + std::to_string(i) + ".png";
+		playerReloadTextures_.push_back(sf::Texture(fileName));
+	}
+	playerAnimations_.push_back(playerReloadTextures_);
+
+
+	//enemy
+
+
+	//bullet
+
+
+	//door
+	
+
+	//walls
+	//walls have only one animation containing one Texture, but must use the same template as other entities for the contextless VisualComponent to work
+	std::vector<sf::Texture> wallIdleTextures_;
+	wallIdleTextures_.push_back(sf::Texture("Assets/Environment/wall.png"));
+	wallAnimations_.push_back(wallIdleTextures_);
+}
+
+void Level::GenerateLevel() {
+
+}
+
 void Level::HandleInput() {
-	characterControllers_[0].Update();
+	int gameObjectIndex = characterControllers_[0].GetGameObjectIndex();
+	characterControllers_[0].Update(gameObjects_[gameObjectIndex]);
 }
 
 
-void Level::Update(float deltaTime) {
-
-	//use a bool to assign the GameObject and Component pointers on the first Update() call
-	if (firstUpdate_) 
-	{
-		//go through all GameObjects and Components and finally assign pointers based on the index we passed in during their construction
-		for (int o = 0; o < gameObjects_.size(); o++)
-		{
-			int controllerIndex = gameObjects_[o].GetControllerIndex();
-			int physicsIndex = gameObjects_[o].GetPhysicsIndex();
-			int visualIndex = gameObjects_[o].GetVisualIndex();
-			int audioIndex = gameObjects_[o].GetAudioIndex();
-
-			ControllerComponent* cComp = controllerIndex == -1 ? nullptr : &characterControllers_[0]; //temp
-			PhysicsComponent* pComp = physicsIndex == -1 ? nullptr : &physicsComponents_[physicsIndex];
-			VisualComponent* vComp = visualIndex == -1 ? nullptr : &visualComponents_[visualIndex];
-			AudioComponent* aComp = audioIndex == -1 ? nullptr : &audioComponents_[audioIndex];
-
-			gameObjects_[o].SetComponents(cComp, pComp, vComp, aComp);
-			//std::cout << "actual obj: " << &gameObjects_[o] << "\n";
-		}
-
-		for (int c = 0; c < characterControllers_.size(); c++)
-		{
-			characterControllers_[c].SetGameObject(&gameObjects_[characterControllers_[c].GetGameObjectIndex()]);
-		}
-
-		for (int p = 0; p < physicsComponents_.size(); p++)
-		{
-			physicsComponents_[p].SetGameObject(&gameObjects_[physicsComponents_[p].GetGameObjectIndex()]);
-		}
-
-		for (int v = 0; v < visualComponents_.size(); v++)
-		{
-			visualComponents_[v].SetGameObject(&gameObjects_[visualComponents_[v].GetGameObjectIndex()]);
-			//std::cout << "vector obj add: " << &gameObjects_[visualComponents_[v].GetGameObjectIndex()] << "\n";
-			//std::cout << "vc obj add: " << &*visualComponents_[v].GetGameObject() << "\n";
-		}
-
-		for (int a = 0; a < audioComponents_.size(); a++)
-		{
-			audioComponents_[a].SetGameObject(&gameObjects_[audioComponents_[a].GetGameObjectIndex()]);
-		}
-		firstUpdate_ = false;
-	}
-
-	for (int o = 0; o < gameObjects_.size(); o++)
-	{
-		//std::cout << &gameObjects_[o] << " obj " << o << ": " << gameObjects_[o].GetPosition().x << ", " << gameObjects_[o].GetPosition().y << "\n";
-	}
+void Level::Update(float const deltaTime) {
 
 	for (int p = 0; p < physicsComponents_.size(); p++)
 	{
-		physicsComponents_[p].Update(deltaTime, physicsComponents_);
+		int gameObjectIndex = physicsComponents_[p].GetGameObjectIndex();
+		physicsComponents_[p].Update(gameObjects_[gameObjectIndex], deltaTime, physicsComponents_);
 	}
 
 	//for (int a = 0; a < audioComponents_.size(); a++)
@@ -131,10 +161,10 @@ void Level::Update(float deltaTime) {
 	//}
 }
 
-void Level::Draw() {
+void Level::Draw(float const deltaTime) {
 	for (int v = 0; v < visualComponents_.size(); v++)
 	{
-		//std::cout << &*visualComponents_[v].GetGameObject() << " vc obj " << v << ": " << visualComponents_[v].GetGameObject()->GetPosition().x << ", " << visualComponents_[v].GetGameObject()->GetPosition().y << "\n";
-		visualComponents_[v].Update();
+		int gameObjectIndex = visualComponents_[v].GetGameObjectIndex();
+		visualComponents_[v].Update(gameObjects_[gameObjectIndex], deltaTime);
 	}
 }

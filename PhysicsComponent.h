@@ -29,15 +29,13 @@ public:
 	~PhysicsComponent() {}
 
 	int GetGameObjectIndex() const { return objIndex_; }
-	void SetGameObject(GameObject* const obj) { obj_ = obj; }
-	GameObject* GetGameObject() const { return obj_; }
 
-	void Update(float deltaTime, std::vector<PhysicsComponent>& const allColliders);
+	void Update(GameObject &obj, float const deltaTime, std::vector<PhysicsComponent> const &allColliders);
 
 	//movement & collision checking
-	void Move(float deltaTime, std::vector<PhysicsComponent>& const allColliders);
-	void ResolveCollisions(bool xAxis, std::vector<PhysicsComponent>& const allColliders);
-	void ResolveInteraction(std::vector<PhysicsComponent>& const allColliders);
+	void Move(GameObject& obj, float const deltaTime, std::vector<PhysicsComponent> const &allColliders);
+	sf::Vector2f ResolveCollisions(sf::Vector2f direction, bool xAxis, std::vector<PhysicsComponent> const &allColliders);
+	void ResolveInteraction(std::vector<PhysicsComponent> const &allColliders);
 
 	//getters
 	ColliderType const GetType() const { return type_; }
@@ -45,9 +43,8 @@ public:
 	sf::FloatRect GetHitbox() const { return hitbox_; }
 
 private:
-	GameObject* obj_ = nullptr;
-
 	int const objIndex_;
+
 	ColliderType const type_;
 	sf::FloatRect collider_;
 	sf::FloatRect hitbox_;

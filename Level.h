@@ -13,9 +13,12 @@ public:
 	Level(sf::RenderWindow* const window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> &levelPlan);
 	~Level() {}
 
+	void GenerateLevel();
+	void GenerateTexturesAndSprites();
+
 	void HandleInput();
-	void Update(float deltaTime);
-	void Draw();
+	void Update(float const deltaTime);
+	void Draw(float const deltaTime);
 
 	int GetLevelId() const { return levelId_; }
 	GameObject GetGameObject(int index) { return gameObjects_[index]; }
@@ -37,6 +40,19 @@ private:
 
 	bool firstUpdate_;
 
-	std::vector<sf::Texture> wallTextures_;
+	//textures
+	std::vector<std::vector<sf::Texture>> playerAnimations_;
+	std::vector<std::vector<sf::Texture>> enemyAnimations_;
+	std::vector<std::vector<sf::Texture>> bulletAnimations;
+	std::vector<std::vector<sf::Texture>> wallAnimations_;
+	std::vector<std::vector<sf::Texture>> doorAnimations_;
+	std::vector<std::vector<sf::Texture>> backgroundAnimations_;
+
+	//sprites
+	std::vector<sf::Sprite> playerSprites_;
+	std::vector<sf::Sprite> enemySprites_;
+	std::vector<sf::Sprite> bulletSprites_;
 	std::vector<sf::Sprite> wallSprites_;
+	std::vector<sf::Sprite> doorSprites_;
+	std::vector<sf::Sprite> backgroundSprites_;
 };

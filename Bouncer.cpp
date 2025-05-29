@@ -14,7 +14,8 @@ int main()
 
     GameManager gm;
 
-    sf::VideoMode vMode(gm.GetScreenDimensions());
+    sf::VideoMode vMode(sf::VideoMode::getDesktopMode().size);
+    //sf::VideoMode vMode(gm.GetScreenDimensions());
     sf::RenderWindow window(vMode, "Bouncer", sf::Style::Close);
 
     std::ifstream levelsFile("Assets/levels.txt");
@@ -41,7 +42,7 @@ int main()
 
         // draw
         window.clear(sf::Color::White);
-        gm.Draw();
+        gm.Draw(deltaTime.asSeconds());
         window.draw(debugText);
         window.display();
     }

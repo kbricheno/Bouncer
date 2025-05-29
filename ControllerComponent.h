@@ -6,5 +6,5 @@ class ControllerComponent{
 public:
 	virtual ~ControllerComponent() {}
 
-	virtual void Update() = 0;
+	virtual void Update(GameObject &obj) = 0;
 };
