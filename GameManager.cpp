@@ -28,9 +28,11 @@ void GameManager::ReadLevels(std::ifstream& const levelsFile) {
     allLevels_.push_back(currentLevel);
 }
 
-void GameManager::HandleInput() {
+#pragma region Game Loop
+
+void GameManager::HandleInput(float const deltaTime) {
     if (currentLevel_.size() > 0) {
-        currentLevel_[0].HandleInput();
+        currentLevel_[0].HandleInput(deltaTime);
     }
 }
 
@@ -54,3 +56,5 @@ void GameManager::Draw(float const deltaTime) {
         currentLevel_[0].Draw(deltaTime);
     }
 }
+
+#pragma endregion

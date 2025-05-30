@@ -4,6 +4,7 @@
 
 #include "GameObject.h"
 #include "CharacterController.h"
+#include "BulletController.h"
 #include "PhysicsComponent.h"
 #include "VisualComponent.h"
 #include "AudioComponent.h"
@@ -13,13 +14,16 @@ public:
 	Level(sf::RenderWindow* const window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> &levelPlan);
 	~Level() {}
 
-	void GenerateLevel();
 	void GenerateTexturesAndSprites();
+	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
 
-	void HandleInput();
+	void SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir);
+
+	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
 	void Draw(float const deltaTime);
 
+	//getters
 	int GetLevelId() const { return levelId_; }
 	GameObject GetGameObject(int index) { return gameObjects_[index]; }
 	CharacterController GetCharacterController(int index) { return characterControllers_[index]; }
@@ -34,6 +38,7 @@ private:
 
 	std::vector<GameObject> gameObjects_;
 	std::vector<CharacterController> characterControllers_;
+	std::vector<BulletController> bulletControllers_;
 	std::vector<PhysicsComponent> physicsComponents_;
 	std::vector<VisualComponent> visualComponents_;
 	std::vector<AudioComponent> audioComponents_;
@@ -43,16 +48,12 @@ private:
 	//textures
 	std::vector<std::vector<sf::Texture>> playerAnimations_;
 	std::vector<std::vector<sf::Texture>> enemyAnimations_;
-	std::vector<std::vector<sf::Texture>> bulletAnimations;
+	std::vector<std::vector<sf::Texture>> bulletAnimations_;
 	std::vector<std::vector<sf::Texture>> wallAnimations_;
 	std::vector<std::vector<sf::Texture>> doorAnimations_;
 	std::vector<std::vector<sf::Texture>> backgroundAnimations_;
 
 	//sprites
-	std::vector<sf::Sprite> playerSprites_;
-	std::vector<sf::Sprite> enemySprites_;
-	std::vector<sf::Sprite> bulletSprites_;
-	std::vector<sf::Sprite> wallSprites_;
-	std::vector<sf::Sprite> doorSprites_;
-	std::vector<sf::Sprite> backgroundSprites_;
+	std::vector<sf::Sprite> sprites_;
+	std::vector<sf::FloatRect> colliders_;
 };

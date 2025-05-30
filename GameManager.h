@@ -14,7 +14,7 @@ public:
 	void SetupWindow(sf::RenderWindow* const window);
 	void ReadLevels(std::ifstream& const levelsFile);
 
-	void HandleInput();
+	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
 	void Draw(float const deltaTime);
 

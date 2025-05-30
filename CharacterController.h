@@ -25,13 +25,13 @@ public:
 
 	int GetGameObjectIndex() const { return objIndex_; }
 
-	void Update(GameObject &obj, float const deltaTime);
+	bool HandleInput(GameObject &obj, float const deltaTime);
 
-	void HandleInput(GameObject &obj);
+	bool ReceiveInput(GameObject &obj);
 	sf::Vector2f CalculateDirection();
 	sf::Angle CalculateRotation(sf::Vector2f objDirection);
 	int CalculateAnimation();
-	void ShootCommand();
+	bool ShootCommand();
 	void ReloadCommand();
 	void ButtonClickCommand();
 

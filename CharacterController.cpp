@@ -1,8 +1,9 @@
+#include <iostream>
 #include "CharacterController.h"
 
-void CharacterController::Update(GameObject &obj, float const deltaTime) {
+bool CharacterController::HandleInput(GameObject &obj, float const deltaTime) {
     //handle events and key presses
-    HandleInput(obj);
+    bool spawnBullet = ReceiveInput(obj);
     timeSinceLastShot += deltaTime;
 
     //update the GameObject's direction_ variable based on the handled input (keys pressed)
@@ -11,9 +12,12 @@ void CharacterController::Update(GameObject &obj, float const deltaTime) {
     obj.SetRotation(CalculateRotation(obj.GetPosition()));
     //update the GameObject's currentAnimation_ variable based on the handled input (state) 
     obj.SetCurrentAnimation(CalculateAnimation());
+
+    return spawnBullet;
 }
 
-void CharacterController::HandleInput(GameObject &obj) {
+bool CharacterController::ReceiveInput(GameObject &obj) {
+    bool spawnBullet = false;
     // handle input from the event queue
     while (const std::optional event = window_->pollEvent())
     {
@@ -40,7 +44,7 @@ void CharacterController::HandleInput(GameObject &obj) {
         {
             if (mouseButtonPressed->button == sf::Mouse::Button::Left)
             {
-                ShootCommand();
+                spawnBullet = ShootCommand();
             }
         }
     }
@@ -82,6 +86,8 @@ void CharacterController::HandleInput(GameObject &obj) {
     {
         moveRight_ = false;
     }
+
+    return spawnBullet;
 }
 
 sf::Vector2f CharacterController::CalculateDirection() {
@@ -143,15 +149,16 @@ sf::Angle CharacterController::CalculateRotation(sf::Vector2f objPosition) {
     return characterAngle;
 }
 
-void CharacterController::ShootCommand() {
+bool CharacterController::ShootCommand() {
     //prevent bullet spam
-    if (timeSinceLastShot < timeBetweenShots) return;
+    if (timeSinceLastShot < timeBetweenShots) return false;
 
     //prevent shooting when out of bullets (add UI message here)
-    if (characterCurrentBullets <= 0) return;
+    if (characterCurrentBullets <= 0) return false;
 
     timeSinceLastShot = 0;
     //tell Level to spawn a bullet using obj direction & obj position -- how to do this without creating a circular dependency?
+    return true;
 }
 
 void CharacterController::ReloadCommand() {

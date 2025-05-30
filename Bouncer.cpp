@@ -29,19 +29,20 @@ int main()
 
     while (window.isOpen()) 
     {
-        //handle input
-        gm.HandleInput();
-
-        // update
         sf::Time deltaTime = clock.restart();
+
+        //handle input
+        gm.HandleInput(deltaTime.asSeconds());
+
+        //update
         debugText.setFont(f);
         debugText.setCharacterSize(50);
         debugText.setPosition({ 500, 500 });
         debugText.setString("");
         gm.Update(deltaTime.asSeconds());
 
-        // draw
-        window.clear(sf::Color::White);
+        //draw
+        window.clear(sf::Color::Color(50,50,50));
         gm.Draw(deltaTime.asSeconds());
         window.draw(debugText);
         window.display();

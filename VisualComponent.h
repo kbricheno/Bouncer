@@ -5,17 +5,18 @@
 
 class VisualComponent {
 public:
-	VisualComponent(int const objIndex, sf::RenderWindow* const window, std::vector<std::vector<sf::Texture>> const &animations, sf::Sprite const &sprite) :
+	VisualComponent(int const objIndex, sf::RenderWindow* const window, std::vector<std::vector<sf::Texture>> const &animations, int const spriteIndex) :
 		objIndex_(objIndex),
 		window_(window),
 		animations_(animations),
-		sprite_(sprite)
+		spriteIndex_(spriteIndex)
 	{}
 	~VisualComponent() {}
 
-	int GetGameObjectIndex() const { return objIndex_; }
+	int const GetGameObjectIndex() const { return objIndex_; }
+	int const GetSpriteIndex() const { return spriteIndex_; }
 
-	void Update(GameObject &obj, float const deltaTime);
+	void Update(GameObject &obj, float const deltaTime, sf::Sprite &sprite);
 
 private:
 	int const objIndex_;
@@ -23,7 +24,7 @@ private:
 	sf::RenderWindow* const window_;
 
 	std::vector<std::vector<sf::Texture>> const animations_;
-	sf::Sprite sprite_;
+	int const spriteIndex_;
 	int const animationFrameRate = 5;
 	float timeElapsedSinceLastFrame_ = 0;
 	int lastAnimation_ = 0;
