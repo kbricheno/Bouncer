@@ -143,6 +143,7 @@
     <ClCompile Include="Bouncer.cpp" />
     <ClCompile Include="BulletController.cpp" />
     <ClCompile Include="CharacterController.cpp" />
+    <ClCompile Include="EnemyController.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="PhysicsComponent.cpp" />
     <ClCompile Include="GameManager.cpp" />
@@ -153,6 +154,7 @@
     <ClInclude Include="AudioComponent.h" />
     <ClInclude Include="BulletController.h" />
     <ClInclude Include="CharacterController.h" />
+    <ClInclude Include="EnemyController.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Level.h" />
     <ClInclude Include="PhysicsComponent.h" />

@@ -13,7 +13,7 @@ public:
 		RELOADING
 	};
 
-	CharacterController(int const objIndex, sf::RenderWindow* const window) : objIndex_(objIndex), window_(window) 
+	CharacterController(int const objId, sf::RenderWindow* const window) : objId_(objId), window_(window) 
 	{
 		window_->setKeyRepeatEnabled(false);
 		moveUp_ = false;
@@ -23,9 +23,9 @@ public:
 	}
 	~CharacterController() {}
 
-	int GetGameObjectIndex() const { return objIndex_; }
-
 	bool HandleInput(GameObject &obj, float const deltaTime);
+	
+	int const GetGameObjectId() const { return objId_; }
 
 	bool ReceiveInput(GameObject &obj);
 	sf::Vector2f CalculateDirection();
@@ -36,18 +36,22 @@ public:
 	void ButtonClickCommand();
 
 private:
-	int const objIndex_;
+	int objId_;
 	sf::RenderWindow* window_;
 
 	//movement
 	bool moveUp_, moveDown_, moveLeft_, moveRight_;
 
 	//shooting/reloading
-	int const characterMaxBullets = 6;
-	float const timeBetweenShots = 0.5f;
+	int characterMaxBullets = 6;
+	float timeBetweenShots = 0.5f;
 	int characterCurrentBullets = 6;
 	float timeSinceLastShot = 0.f;
 
 	//animation
 	CharacterState state_ = CharacterState::IDLING;
+	float shootAnimationTimer = 0.f;
+	float shootAnimationDuration = 0.2f;
+	float reloadAnimationTimer = 0.f;
+	float reloadAnimationDuration = 0.3f;
 };

@@ -4,18 +4,16 @@
 
 class BulletController : public ControllerComponent {
 public:
-	BulletController(int const objIndex, sf::Vector2f startDir) : objIndex_(objIndex), startDir_(startDir) {}
+	BulletController(int const objId) : objId_(objId) {}
 	~BulletController() {}
 
-	int GetGameObjectIndex() const { return objIndex_; }
-
 	bool HandleInput(GameObject& obj, float const deltaTime);
+	
+	int const GetGameObjectId() const { return objId_; }
 
 private:
-	int const objIndex_;
+	int objId_;
 
-	sf::Vector2f const startDir_;
-	float const speed_ = 1000.f;
-
-	bool firstUpdate = true;
+	int maxBounces_ = 2;
+	int currentBounce_ = 0;
 };

@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "CharacterController.h"
 #include "BulletController.h"
+#include "EnemyController.h"
 #include "PhysicsComponent.h"
 #include "VisualComponent.h"
 #include "AudioComponent.h"
@@ -36,24 +37,24 @@ private:
 
 	sf::RenderWindow* window_ = nullptr;
 
+	//counter for the number of GameObjects created over the course of the Level's existence
+	//used to generate IDs for GameObjects and Components to identify each other
+	//can't use the size of the GameObject vector because indexes get messed up as objects are destroyed
+	int currentObjectId = 0;
+
 	std::vector<GameObject> gameObjects_;
 	std::vector<CharacterController> characterControllers_;
 	std::vector<BulletController> bulletControllers_;
+	std::vector<EnemyController> enemyControllers_;
 	std::vector<PhysicsComponent> physicsComponents_;
 	std::vector<VisualComponent> visualComponents_;
 	std::vector<AudioComponent> audioComponents_;
 
-	bool firstUpdate_;
-
 	//textures
-	std::vector<std::vector<sf::Texture>> playerAnimations_;
+	std::vector<std::vector<sf::Texture>> characterAnimations_;
 	std::vector<std::vector<sf::Texture>> enemyAnimations_;
 	std::vector<std::vector<sf::Texture>> bulletAnimations_;
 	std::vector<std::vector<sf::Texture>> wallAnimations_;
 	std::vector<std::vector<sf::Texture>> doorAnimations_;
 	std::vector<std::vector<sf::Texture>> backgroundAnimations_;
-
-	//sprites
-	std::vector<sf::Sprite> sprites_;
-	std::vector<sf::FloatRect> colliders_;
 };

@@ -4,13 +4,13 @@
 
 class AudioComponent {
 public:
-	AudioComponent(int const objIndex) : objIndex_(objIndex) {}
+	AudioComponent(int const objId) : objId_(objId) {}
 	~AudioComponent() {}
 
-	int GetGameObjectIndex() const { return objIndex_; }
+	int GetGameObjectId() const { return objId_; }
 
 	void Update(GameObject& obj);
 
 private:
-	int const objIndex_;
+	int objId_;
 };

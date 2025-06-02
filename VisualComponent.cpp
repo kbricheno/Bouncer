@@ -1,7 +1,7 @@
 #include "VisualComponent.h"
 #include <iostream>
 
-void VisualComponent::Update(GameObject &obj, float const deltaTime, sf::Sprite &sprite) {
+void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	
 	timeElapsedSinceLastFrame_ += deltaTime;
 		
@@ -21,14 +21,14 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime, sf::Sprite 
 			timeElapsedSinceLastFrame_ = 0;
 		}
 	}
-	sprite.setTexture(animations_[obj.GetCurrentAnimation()][currentFrame_]);
+	sprites_[0].setTexture(animations_[obj.GetCurrentAnimation()][currentFrame_]);
 			
 	//every sprite's origin is set to its center, so offset the true position by half of the sprite's size
-	sf::Vector2f spritePos = obj.GetPosition() + sprite.getLocalBounds().size / 2.f;
+	obj.SetCenter(obj.GetColliderPosition() + sprites_[0].getLocalBounds().size / 2.f);
 
 	//move and draw the Sprite
-	sprite.setPosition(spritePos);
-	sprite.setRotation(obj.GetRotation());
+	sprites_[0].setPosition(obj.GetSpritePosition());
+	sprites_[0].setRotation(obj.GetRotation());
 
-	window_->draw(sprite);
+	window_->draw(sprites_[0]);
 }

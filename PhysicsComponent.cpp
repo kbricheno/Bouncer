@@ -1,18 +1,19 @@
 #include "PhysicsComponent.h"
 #include <iostream>
 
-void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::vector<sf::FloatRect> &allColliders) {
+void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::vector<PhysicsComponent> const &allPhysicsComponents) {
+
 	//perform specific behaviour depending on assigned type
 	switch (type_)
 	{
 	case ColliderType::PLAYER:
-		Move(obj, deltaTime, allColliders);
+		Move(obj, deltaTime, allPhysicsComponents);
 		break;
 	case ColliderType::ENEMY:
-		Move(obj, deltaTime, allColliders);
+		Move(obj, deltaTime, allPhysicsComponents);
 		break;
 	case ColliderType::BULLET:
-		Move(obj, deltaTime, allColliders);
+		Move(obj, deltaTime, allPhysicsComponents);
 		break;
 	case ColliderType::DOOR:
 		//ResolveInteraction(allColliders, hitbox);
@@ -21,102 +22,106 @@ void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::vecto
 		break;
 	}
 
-	//save this collider as a variable for readability
-	sf::FloatRect &collider = allColliders[colliderIndex_];
+	//set the collider position
+	collider_.position = obj.GetColliderPosition();
 
-	sf::Vector2f pos = collider.position;
-	collider.position = obj.GetPosition();
-	//hitbox.position = obj.GetPosition();
+	//set the hitbox position (hitboxes extend slightly further than colliders to ensure objects can interact)
+	hitbox_.position = collider_.position + (collider_.size - hitbox_.size) / 2.f;
+	
+	//set the GameObject's sprite position to be utilised by the VisualComponent (sprites' origins are their centers, so offset by half the collider's size)
+	obj.SetSpritePosition(obj.GetColliderPosition() + (collider_.size / 2.f));
 }
 
-void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::vector<sf::FloatRect> &allColliders) {
+void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::vector<PhysicsComponent> const &allPhysicsComponents) {
 	//don't run move code if move input (direction) is empty
 	if (obj.GetDirection() == sf::Vector2f{ 0, 0 }) return;
 
-	//save this collider as a variable for readability
-	sf::FloatRect& collider = allColliders[colliderIndex_];
+	//normalization used to prevent the object moving faster diagonally
+	//deltaTime used to maintain the object's speed regardless of frameratef
+	float newPosX = obj.GetColliderPosition().x + (obj.GetDirection().normalized().x * speed_ * deltaTime);
+	float newPosY = obj.GetColliderPosition().y + (obj.GetDirection().normalized().y * speed_ * deltaTime);
 
-	//for loop speed, set obj position to obj position + direction and perform collision detection
-	for (int i = 0; i < speed_; i++)
+	if (collider_ != sf::FloatRect()) //if this object has a collider -- collider does not equal a FloatRect of (0,0),(0,0)
 	{
-		//normalization used to prevent the object moving faster diagonally
-		//deltaTime used to maintain the object's speed regardless of framerate
-		float newPosX = obj.GetPosition().x + (obj.GetDirection().normalized().x * deltaTime);
-		float newPosY = obj.GetPosition().y + (obj.GetDirection().normalized().y * deltaTime);
-
 		//move this collider using proposed positions, then immediately check collisions to validate position
 		//check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
-		collider.position = { newPosX, obj.GetPosition().y};
-		obj.SetPosition(ResolveCollisions(obj.GetDirection(), true, allColliders));
-		collider.position = { obj.GetPosition().x, newPosY };
-		obj.SetPosition(ResolveCollisions(obj.GetDirection(), false, allColliders));
-
-		//ResolveInteraction(allColliders, hitbox);
+		collider_.position = { newPosX, obj.GetColliderPosition().y };
+		ResolveCollisions(obj, true, allPhysicsComponents);
+		collider_.position = { obj.GetColliderPosition().x, newPosY };
+		ResolveCollisions(obj, false, allPhysicsComponents);
 	}
+	else 
+	{
+		obj.SetColliderPosition({ newPosX, newPosY });
+	}
+
+	//ResolveInteraction(allColliders, hitbox);
 }
 
-sf::Vector2f PhysicsComponent::ResolveCollisions(sf::Vector2f direction, bool xAxis, std::vector<sf::FloatRect> &allColliders) {
+void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::vector<PhysicsComponent> const &allPhysicsComponents) {
 
 	bool collisionDetected = false;
 
-	//save this collider as a variable for readability
-	sf::FloatRect &collider = allColliders[colliderIndex_];
-
-	//loop through all colliders
-	for (int i = 0; i < allColliders.size(); i++)
+	//loop through all PhysicsComponents
+	for (int i = 0; i < allPhysicsComponents.size(); i++)
 	{
-		//check for overlap with this collider
-		if (collider.findIntersection(allColliders[i]))
+		//conditions: only check for collisions with PhysicsComponents that have solid colliders, and don't check for collisions with yourself
+		if (allPhysicsComponents[i].solid_ && allPhysicsComponents[i].collider_ != collider_)
 		{
-			//don't collide with yourself!
-			if (allColliders[i] != collider) 
+			sf::FloatRect otherCollider = allPhysicsComponents[i].collider_;
+
+			//check for overlap with the other collider
+			if (collider_.findIntersection(otherCollider))
 			{
 				collisionDetected = true;
 
 				//create floats ready to push this collider out of the other collider
-				float pushedOutX = collider.position.x, pushedOutY = collider.position.y;
+				float pushedOutX = collider_.position.x, pushedOutY = collider_.position.y;
 
 				if (xAxis) //check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
 				{
-					if (direction.x > 0) // moving right
+					if (obj.GetDirection().x > 0) // moving right
 					{
 						//TODO: update this when we swap to using rects' centers as their origins/positions
-						pushedOutX = allColliders[i].position.x - collider.size.x;
+						pushedOutX = otherCollider.position.x - collider_.size.x;
 					}
-					else if (direction.x < 0) // moving left
+					else if (obj.GetDirection().x < 0) // moving left
 					{
-						pushedOutX = allColliders[i].position.x + allColliders[i].size.x;
+						pushedOutX = otherCollider.position.x + otherCollider.size.x;
 					}
-				}
-			
-				else 
-				{
-					if (direction.y > 0) // moving down
+
+					//some entities have additional behaviour when they collide with a solid object
+					if (type_ == ColliderType::BULLET || type_ == ColliderType::ENEMY)
 					{
-						pushedOutY = allColliders[i].position.y - collider.size.y;
-					}
-					else if (direction.y < 0) // moving up
-					{
-						pushedOutY = allColliders[i].position.y + allColliders[i].size.y;
+						obj.NotifyHorizontalCollision(true);
 					}
 				}
 
-				//bullets have special additional behaviour
-				if (type_ == ColliderType::BULLET)
+				else
 				{
-					//swap direction of movement if bullet hasn't already bounced twice
-					//if hit left/right side, flip x direction
-					//if hit top/bottom side, flip y direction
-				}
+					if (obj.GetDirection().y > 0) // moving down
+					{
+						pushedOutY = otherCollider.position.y - collider_.size.y;
+					}
+					else if (obj.GetDirection().y < 0) // moving up
+					{
+						pushedOutY = otherCollider.position.y + otherCollider.size.y;
+					}
 
+					//some entities have additional behaviour when they collide with a solid object
+					if (type_ == ColliderType::BULLET || type_ == ColliderType::ENEMY)
+					{
+						obj.NotifyVerticalCollision(true);
+					}
+				}
 				//return the corrected position coordinates
-				return sf::Vector2f(pushedOutX, pushedOutY);
+				obj.SetColliderPosition({ pushedOutX, pushedOutY });
 			}
 		}
 	}
 
 	//if there was no collision, return this collider's position
-	return collider.position;
+	if (!collisionDetected) obj.SetColliderPosition(collider_.position);
 }
 
 //void PhysicsComponent::ResolveInteraction(std::vector<PhysicsComponent> const &allColliders, sf::FloatRect hitbox) {

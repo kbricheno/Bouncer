@@ -6,5 +6,5 @@ class ControllerComponent{
 public:
 	virtual ~ControllerComponent() {}
 
-	virtual bool HandleInput(GameObject &obj, float const deltaTime) = 0;
+	virtual bool HandleInput(GameObject& obj, float const deltaTime) = 0;
 };

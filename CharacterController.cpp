@@ -9,9 +9,12 @@ bool CharacterController::HandleInput(GameObject &obj, float const deltaTime) {
     //update the GameObject's direction_ variable based on the handled input (keys pressed)
     obj.SetDirection(CalculateDirection());
     //update the GameObject's rotation_ variable based on the handled input (mouse position, obj position)
-    obj.SetRotation(CalculateRotation(obj.GetPosition()));
+    obj.SetRotation(CalculateRotation(obj.GetCenter()));
     //update the GameObject's currentAnimation_ variable based on the handled input (state) 
     obj.SetCurrentAnimation(CalculateAnimation());
+
+    shootAnimationTimer -= deltaTime;
+    reloadAnimationTimer -= deltaTime;
 
     return spawnBullet;
 }
@@ -100,13 +103,17 @@ sf::Vector2f CharacterController::CalculateDirection() {
     if (moveLeft_) newDirX--;
     if (moveRight_) newDirX++;
 
-    if (sf::Vector2f{ newDirX, newDirY }.lengthSquared() == 0) //if there's no direction (no input), character is idling
+    //change animation
+    if (reloadAnimationTimer <= 0 && shootAnimationTimer <= 0) //if not performing other uncancellable animation
     {
-        state_ = CharacterState::IDLING;
-    }
-    else //if there's direction (input), character is walking
-    {
-        state_ = CharacterState::WALKING;
+        if (sf::Vector2f{ newDirX, newDirY }.lengthSquared() == 0) //if there's no direction (no input), character is idling
+        {
+            state_ = CharacterState::IDLING;
+        }
+        else //if there's direction (input), character is walking
+        {
+            state_ = CharacterState::WALKING;
+        }
     }
 
     return { newDirX, newDirY };
@@ -128,6 +135,7 @@ int CharacterController::CalculateAnimation() {
         return 3;
         break;
     default:
+        return 0;
         break;
     }
 }
@@ -156,13 +164,28 @@ bool CharacterController::ShootCommand() {
     //prevent shooting when out of bullets (add UI message here)
     if (characterCurrentBullets <= 0) return false;
 
+    //change animation
+    if (reloadAnimationTimer <= 0) //reload animation takes precedence over shoot animationf
+    {
+        state_ = CharacterState::SHOOTING;
+        shootAnimationTimer = shootAnimationDuration;
+    }
+
+    //shoot
     timeSinceLastShot = 0;
+    characterCurrentBullets--;
+
     //tell Level to spawn a bullet using obj direction & obj position -- how to do this without creating a circular dependency?
     return true;
 }
 
 void CharacterController::ReloadCommand() {
+    //change animation
+    state_ = CharacterState::RELOADING;
+    reloadAnimationTimer = reloadAnimationDuration;
 
+    //reload
+    characterCurrentBullets = characterMaxBullets;
 }
 
 void CharacterController::ButtonClickCommand() {
