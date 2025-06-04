@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include <map>
 
 #include "GameObject.h"
 #include "CharacterController.h"
@@ -16,6 +18,7 @@ public:
 	~Level() {}
 
 	void GenerateTextures();
+	bool GenerateSoundEffects();
 	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
 
 	void SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir);
@@ -59,4 +62,12 @@ private:
 	std::vector<std::vector<sf::Texture>> doorHorAnimations_;
 	std::vector<std::vector<sf::Texture>> doorVerAnimations_;
 	std::vector<std::vector<sf::Texture>> backgroundAnimations_;
+
+	//sounds
+	std::map<std::string, sf::SoundBuffer> characterSoundEffects_;
+	std::map<std::string, sf::SoundBuffer> enemySoundEffects_;
+	std::map<std::string, sf::SoundBuffer> bulletSoundEffects_;
+	std::map<std::string, sf::SoundBuffer> doorSoundEffects_;
+	std::map<std::string, sf::SoundBuffer> globalSoundEffects;
+
 };

@@ -7,10 +7,14 @@ Level::Level(sf::RenderWindow* const window, const int levelId, const int tileSi
 	window_ = window;
 
 	GenerateTextures();
+	if (!GenerateSoundEffects()) std::cout << "ERROR: Could not find all sound effect file paths!\n";
+	
 	GenerateLevel(tileSize, levelWidth, levelHeight, levelPlan);
 }
 
 //create all Textures, store them in vectors (here rather than on a GameObject or Component so we only create 1 set of each Texture for the entire level)
+//TODO: move this to the GameManager class; we only need 1 set of these for the entire *game*, no need to re-create them each level
+//TODO: error handling for if a file is not found/loaded
 void Level::GenerateTextures() {
 	
 	//player animations .....................................................................................................................................................
@@ -128,6 +132,55 @@ void Level::GenerateTextures() {
 
 }
 
+bool Level::GenerateSoundEffects() {
+
+	//character sound effects
+	sf::SoundBuffer characterShoot;
+	sf::SoundBuffer characterReload;
+	if (!characterShoot.loadFromFile("Assets/Sound/playerShoot.wav")) return false;
+	if (!characterReload.loadFromFile("Assets/Sound/playerReload.wav")) return false;
+
+	characterSoundEffects_.insert({ "shoot", characterShoot });
+	characterSoundEffects_.insert({ "reload", characterReload });
+
+
+	//enemy sound effects
+	sf::SoundBuffer enemyDeath;
+	if (!enemyDeath.loadFromFile("Assets/Sound/guardDeath.wav")) return false;
+
+	enemySoundEffects_.insert({ "die", enemyDeath });
+
+
+	//bullet sound effects
+	sf::SoundBuffer bulletBounce;
+	if (!bulletBounce.loadFromFile("Assets/Sound/bulletBounce.wav")) return false;
+
+	bulletSoundEffects_.insert({ "bounce", bulletBounce });
+
+
+	//door sound effects
+	sf::SoundBuffer doorBreak;
+	if (!doorBreak.loadFromFile("Assets/Sound/doorBreak.wav")) return false;
+
+	doorSoundEffects_.insert({ "break", doorBreak });
+
+
+	//global sound effects
+	sf::SoundBuffer victory;
+	if (!victory.loadFromFile("Assets/Sound/success.wav")) return false;
+
+	globalSoundEffects.insert({ "victory", victory });
+
+	sf::SoundBuffer detected;
+	if (!detected.loadFromFile("Assets/Sound/houseAlarm.wav")) return false;
+
+	globalSoundEffects.insert({ "detected", detected });
+
+
+	//all sound buffers successfully loaded
+	return true;
+}
+
 void Level::GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan) {
 
 	//create all the level GameObjects and Components
@@ -163,6 +216,7 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 			CharacterController cComp(currentObjectId, window_);
 			VisualComponent vComp(currentObjectId, window_, characterAnimations_);
 			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::PLAYER, 500.f);
+			AudioComponent aComp(currentObjectId, )
 
 			//store everything
 			gameObjects_.push_back(characterObj);
