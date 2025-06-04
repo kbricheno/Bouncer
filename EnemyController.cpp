@@ -55,7 +55,13 @@ bool EnemyController::HandleInput(GameObject &obj, float const deltaTime) {
 			obj.SetDirection({ 0,0 });
 
 			//play the dying animation, loop the final frame
-			obj.SetCurrentAnimation(1, 3);
+			obj.AddAnimationToStack(1, 3);
+
+			//tell the AudioComponent to play a sound
+			obj.NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
+
+			//reset the notification so this doesn't trigger constantly
+			obj.NotifyHitByBullet(false);
 		}
 	}
 

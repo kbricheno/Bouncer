@@ -7,14 +7,9 @@ bool CharacterController::HandleInput(GameObject &obj, float const deltaTime) {
     timeSinceLastShot += deltaTime;
 
     //update the GameObject's direction_ variable based on the handled input (keys pressed)
-    obj.SetDirection(CalculateDirection());
+    obj.SetDirection(CalculateDirection(obj));
     //update the GameObject's rotation_ variable based on the handled input (mouse position, obj position)
-    obj.SetRotation(CalculateRotation(obj.GetCenter()));
-    //update the GameObject's currentAnimation_ variable based on the handled input (state) 
-    CalculateAnimation(obj);
-
-    shootAnimationTimer -= deltaTime;
-    reloadAnimationTimer -= deltaTime;
+    obj.SetRotation(CalculateRotation(obj));
 
     return spawnBullet;
 }
@@ -40,14 +35,14 @@ bool CharacterController::ReceiveInput(GameObject &obj) {
             //reloading
             if (keyPressed->scancode == sf::Keyboard::Scancode::R)
             {
-                ReloadCommand();
+                ReloadCommand(obj);
             }
         }
         else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>())
         {
             if (mouseButtonPressed->button == sf::Mouse::Button::Left)
             {
-                spawnBullet = ShootCommand();
+                spawnBullet = ShootCommand(obj);
             }
         }
     }
@@ -93,7 +88,7 @@ bool CharacterController::ReceiveInput(GameObject &obj) {
     return spawnBullet;
 }
 
-sf::Vector2f CharacterController::CalculateDirection() {
+sf::Vector2f CharacterController::CalculateDirection(GameObject &obj) {
     //start by setting the direction values to zero
     float newDirX = 0, newDirY = 0;
     
@@ -104,48 +99,34 @@ sf::Vector2f CharacterController::CalculateDirection() {
     if (moveRight_) newDirX++;
 
     //change animation
-    if (reloadAnimationTimer <= 0 && shootAnimationTimer <= 0) //if not performing other uncancellable animation
+    if (sf::Vector2f{ newDirX, newDirY }.lengthSquared() == 0) //if there's no direction (no input), character is idling
     {
-        if (sf::Vector2f{ newDirX, newDirY }.lengthSquared() == 0) //if there's no direction (no input), character is idling
+        //the idling animation is 0 which for every object is always at the bottom of the animation stack, looping forever
+        //if the character is currently walking, pop the walking animation out to enable the idling animation to play
+        //idling should only ever interrupt walking, not shooting or reloading (shooting/reloading don't loop so they pop themselves out of the stack when finished)
+        if (obj.GetCurrentAnimation() == 1)
         {
-            state_ = CharacterState::IDLING;
+            obj.RemoveAnimationFromStack();
         }
-        else //if there's direction (input), character is walking
+    }
+    else //if there's direction (input), character is walking
+    {
+        //only interrupt the idling animation, not shooting or reloading
+        if (obj.GetCurrentAnimation() == 0) 
         {
-            state_ = CharacterState::WALKING;
+            obj.AddAnimationToStack(1, 0);
         }
     }
 
     return { newDirX, newDirY };
 }
 
-void CharacterController::CalculateAnimation(GameObject &obj) {
-    switch (state_)
-    {
-    case CharacterController::CharacterState::IDLING:
-        obj.SetCurrentAnimation(0, 0);
-        break;
-    case CharacterController::CharacterState::WALKING:
-        obj.SetCurrentAnimation(1, 0);
-        break;
-    case CharacterController::CharacterState::SHOOTING:
-        obj.SetCurrentAnimation(2);
-        break;
-    case CharacterController::CharacterState::RELOADING:
-        obj.SetCurrentAnimation(3);
-        break;
-    default:
-        obj.SetCurrentAnimation(0, 0);
-        break;
-    }
-}
-
-sf::Angle CharacterController::CalculateRotation(sf::Vector2f objPosition) {
+sf::Angle CharacterController::CalculateRotation(GameObject &obj) {
     //get the mouse position in the window (in screen space)
     sf::Vector2i mousePos = sf::Mouse::getPosition(*window_);
 
     //calculate the vector between the player and mouse
-    sf::Vector2f relativePos = { mousePos.x - objPosition.x, mousePos.y - (objPosition.y) };
+    sf::Vector2f relativePos = { mousePos.x - obj.GetCenter().x, mousePos.y - (obj.GetCenter().y)};
 
     //convert the vector into an angle (radians)
     float lookAtMouse = atan2(relativePos.y, relativePos.x);
@@ -157,19 +138,21 @@ sf::Angle CharacterController::CalculateRotation(sf::Vector2f objPosition) {
     return characterAngle;
 }
 
-bool CharacterController::ShootCommand() {
+bool CharacterController::ShootCommand(GameObject &obj) {
     //prevent bullet spam
     if (timeSinceLastShot < timeBetweenShots) return false;
 
     //prevent shooting when out of bullets (add UI message here)
     if (characterCurrentBullets <= 0) return false;
 
+    //prevent shooting while reloading
+    if (obj.GetCurrentAnimation() == 3) return false;
+
     //change animation
-    if (reloadAnimationTimer <= 0) //reload animation takes precedence over shoot animationf
-    {
-        state_ = CharacterState::SHOOTING;
-        shootAnimationTimer = shootAnimationDuration;
-    }
+    obj.AddAnimationToStack(2);
+
+    //play a sound
+    obj.NotifySoundEvent(GameObject::SoundEvent::CHARACTER_SHOOT);
 
     //shoot
     timeSinceLastShot = 0;
@@ -179,10 +162,12 @@ bool CharacterController::ShootCommand() {
     return true;
 }
 
-void CharacterController::ReloadCommand() {
+void CharacterController::ReloadCommand(GameObject &obj) {
     //change animation
-    state_ = CharacterState::RELOADING;
-    reloadAnimationTimer = reloadAnimationDuration;
+    obj.AddAnimationToStack(3);
+
+    //play a sound
+    obj.NotifySoundEvent(GameObject::SoundEvent::CHARACTER_RELOAD);
 
     //reload
     characterCurrentBullets = characterMaxBullets;

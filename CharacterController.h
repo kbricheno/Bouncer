@@ -13,7 +13,7 @@ public:
 		RELOADING
 	};
 
-	CharacterController(int const objId, sf::RenderWindow* const window) : objId_(objId), window_(window) 
+	CharacterController(sf::RenderWindow* const window) : window_(window) 
 	{
 		window_->setKeyRepeatEnabled(false);
 		moveUp_ = false;
@@ -25,18 +25,14 @@ public:
 
 	bool HandleInput(GameObject &obj, float const deltaTime);
 	
-	int const GetGameObjectId() const { return objId_; }
-
 	bool ReceiveInput(GameObject &obj);
-	sf::Vector2f CalculateDirection();
-	sf::Angle CalculateRotation(sf::Vector2f objDirection);
-	void CalculateAnimation(GameObject& obj);
-	bool ShootCommand();
-	void ReloadCommand();
+	sf::Vector2f CalculateDirection(GameObject& obj);
+	sf::Angle CalculateRotation(GameObject& obj);
+	bool ShootCommand(GameObject& obj);
+	void ReloadCommand(GameObject& obj);
 	void ButtonClickCommand();
 
 private:
-	int objId_;
 	sf::RenderWindow* window_;
 
 	//movement
@@ -50,8 +46,4 @@ private:
 
 	//animation
 	CharacterState state_ = CharacterState::IDLING;
-	float shootAnimationTimer = 0.f;
-	float shootAnimationDuration = 0.2f;
-	float reloadAnimationTimer = 0.f;
-	float reloadAnimationDuration = 0.3f;
 };

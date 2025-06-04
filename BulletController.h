@@ -4,15 +4,11 @@
 
 class BulletController : public ControllerComponent {
 public:
-	BulletController(int const objId) : objId_(objId) {}
+	BulletController() {}
 	~BulletController() {}
 
 	bool HandleInput(GameObject& obj, float const deltaTime);
 	
-	int const GetGameObjectId() const { return objId_; }
-
 private:
-	int objId_;
-
 	int maxBounces_ = 2;
 };

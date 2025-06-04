@@ -30,11 +30,6 @@ public:
 
 	//getters
 	int GetLevelId() const { return levelId_; }
-	GameObject GetGameObject(int index) { return gameObjects_[index]; }
-	CharacterController GetCharacterController(int index) { return characterControllers_[index]; }
-	PhysicsComponent GetPhysicsComponent(int index) { return physicsComponents_[index]; }
-	VisualComponent GetVisualComponent(int index) { return visualComponents_[index]; }
-	AudioComponent GetAudioComponent(int index) { return audioComponents_[index]; }
 
 private:
 	int levelId_ = 0;
@@ -46,13 +41,13 @@ private:
 	//can't use the size of the GameObject vector because indexes get messed up as objects are destroyed
 	int currentObjectId = 0;
 
-	std::vector<GameObject> gameObjects_;
-	std::vector<CharacterController> characterControllers_;
-	std::vector<BulletController> bulletControllers_;
-	std::vector<EnemyController> enemyControllers_;
-	std::vector<PhysicsComponent> physicsComponents_;
-	std::vector<VisualComponent> visualComponents_;
-	std::vector<AudioComponent> audioComponents_;
+	std::map<int, GameObject> gameObjects_;
+	std::map<int, CharacterController> characterControllers_;
+	std::map<int, BulletController> bulletControllers_;
+	std::map<int, EnemyController> enemyControllers_;
+	std::map<int, PhysicsComponent> physicsComponents_;
+	std::map<int, VisualComponent> visualComponents_;
+	std::map<int, AudioComponent> audioComponents_;
 
 	//textures
 	std::vector<std::vector<sf::Texture>> characterAnimations_;

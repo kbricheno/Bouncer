@@ -1,4 +1,5 @@
 #pragma once
+#include <stack>
 #include <SFML/Graphics.hpp>
 
 class ControllerComponent;
@@ -8,21 +9,42 @@ class AudioComponent;
 
 class GameObject {
 public:
-	GameObject(int const gameObjectId,
+	enum class EntityType {
+		PLAYER,
+		BULLET,
+		ENEMY,
+		ENEMY_VISION,
+		WALL,
+		DOOR,
+		BACKGROUND
+	};
+
+	enum class SoundEvent {
+		NONE,
+		CHARACTER_SHOOT,
+		CHARACTER_RELOAD,
+		BULLET_COLLISION,
+		SOLID_COLLISION,
+		GAME_OVER,
+		VICTORY
+	};
+
+	GameObject(EntityType type,
 		sf::Vector2f const position,
 		sf::Vector2f const spriteSize,
 		sf::Vector2f const direction = sf::Vector2f())
-		: 
-		gameObjectId_(gameObjectId),
+		:
+		type_(type),
 		colliderPosition_(position),
-		spritePosition_(spriteSize/2.f),
 		direction_(direction)
-	{}
+	{
+		centerPosition_ = colliderPosition_ + spriteSize / 2.f;
+	}
 	~GameObject() {}
 
-	int const GetGameObjectId() const { return gameObjectId_; }
-
 	//getters and setters for variables used by Components
+	EntityType const GetType() const { return type_; }
+
 	sf::Vector2f GetColliderPosition() const { return colliderPosition_; }
 	void SetColliderPosition(sf::Vector2f colliderPosition) { colliderPosition_ = colliderPosition; }
 
@@ -35,12 +57,10 @@ public:
 	sf::Angle GetRotation() const { return rotation_; }
 	void SetRotation(sf::Angle rotation) { rotation_ = rotation; }
 
-	int GetCurrentAnimation() const { return currentAnimation_; }
-	int GetAnimationLoopFrame() const { return animationLoopFrame_; }
-	void SetCurrentAnimation(int currentAnimation, int loopAnimationFromFrame = -1) { currentAnimation_ = currentAnimation; animationLoopFrame_ = loopAnimationFromFrame; }
-
-	void SetSpritePosition(sf::Vector2f spritePosition) { spritePosition_ = spritePosition; }
-	sf::Vector2f GetSpritePosition() const { return spritePosition_; }
+	int GetCurrentAnimation() const { return animationStack_.top(); }
+	int GetAnimationLoopFrame() const { return loopFrameStack_.top(); }
+	void AddAnimationToStack(int newAnim, int frameToLoopFrom = -1) { animationStack_.push(newAnim); loopFrameStack_.push(frameToLoopFrom); }
+	void RemoveAnimationFromStack() { animationStack_.pop(); loopFrameStack_.pop(); }
 
 	bool CheckDead() const { return dead_; }
 	void Kill() { dead_ = true; }
@@ -56,18 +76,31 @@ public:
 	int GetBulletBounceCount() const { return bulletBounceCount_; }
 	void SetBulletBounceCount(int bulletBounceCount) { bulletBounceCount_ = bulletBounceCount; }
 
-private:
-	int gameObjectId_;
+	SoundEvent CheckSoundEvent() const { return currentSound_; }
+	void NotifySoundEvent(SoundEvent currentSound) { currentSound_ = currentSound; }
 
+private:
+	EntityType type_;
 	bool dead_ = false;
 
+	//colliderPosition_ is updated by a PhysicsComponent based on direction_
 	sf::Vector2f colliderPosition_;
+
+	//direction_ is updated by a ControllerComponent based on player input or some notification
 	sf::Vector2f direction_;
-	sf::Vector2f centerPosition_ = { 0,0 };
-	int currentAnimation_ = 0;
-	int animationLoopFrame_ = 0;
+
+	//centerPosition_ is updated by a PhysicsComponent (center of the collider) and used by a VisualComponent to draw a sprite at its centered origin
+	//it's set once on GameObject construction to the starting position + 1/2 the sprite size, which is used by entities that do not have a PhysicsComponent
+	sf::Vector2f centerPosition_;
+
+	//currentAnimation_ and animationLoopFrame_ are updated by a ControllerComponent and used by a VisualComponent
+	std::stack<int> animationStack_;
+	std::stack<int> loopFrameStack_;
+
+	//rotation_ is 0 for everything except the character and bullets -- it's updated by a ControllerComponent and used by a VisualComponent
 	sf::Angle rotation_ = sf::degrees(0);
-	sf::Vector2f spritePosition_;
+
+	SoundEvent currentSound_ = SoundEvent::NONE;
 
 	//entity-specific state
 	bool collidedHorizontally_ = false;

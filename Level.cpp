@@ -194,95 +194,102 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 		{
 			//create GameObject, pass in its id and position
 			//the id will be used to locate its Components when needed
-			GameObject wallObj(currentObjectId, position, (sf::Vector2f)wallAnimations_[0][0].getSize());
+			GameObject wallObj(GameObject::EntityType::WALL, position, (sf::Vector2f)wallAnimations_[0][0].getSize());
 
 			//create VisualComponent, pass in the id needed to identify its GameObject, a pointer to the window, and a reference to its Textures
 			//create PhysicsComponent, pass in its id and the type of collider it should have
-			VisualComponent vComp(currentObjectId, window_, wallAnimations_);
-			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::WALL);
+			VisualComponent vComp(window_, wallAnimations_);
+			PhysicsComponent pComp(wallObj.GetType());
 
 			//store the GameObject and Components in this Level instance
-			gameObjects_.push_back(wallObj);
-			visualComponents_.push_back(vComp);
-			physicsComponents_.push_back(pComp);
+			gameObjects_.insert({ currentObjectId, wallObj });
+			visualComponents_.insert({ currentObjectId, vComp });
+			physicsComponents_.insert({ currentObjectId, pComp });
 		}
 
 		//spawn character
 		else if (levelPlan[i] == 'P') {
 			//create GameObject
-			GameObject characterObj(currentObjectId, position, (sf::Vector2f)characterAnimations_[0][0].getSize());
+			GameObject characterObj(GameObject::EntityType::PLAYER, position, (sf::Vector2f)characterAnimations_[0][0].getSize());
 
 			//create Components
-			CharacterController cComp(currentObjectId, window_);
-			VisualComponent vComp(currentObjectId, window_, characterAnimations_);
-			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::PLAYER, 500.f);
-			AudioComponent aComp(currentObjectId, )
+			CharacterController cComp(window_);
+			VisualComponent vComp(window_, characterAnimations_);
+			PhysicsComponent pComp(characterObj.GetType(), 500.f);
+			AudioComponent aComp(characterSoundEffects_);
 
 			//store everything
-			gameObjects_.push_back(characterObj);
-			characterControllers_.push_back(cComp);
-			visualComponents_.push_back(vComp);
-			physicsComponents_.push_back(pComp);
+			gameObjects_.insert({ currentObjectId, characterObj });
+			characterControllers_.insert({ currentObjectId, cComp });
+			visualComponents_.insert({ currentObjectId, vComp });
+			physicsComponents_.insert({ currentObjectId, pComp });
+			audioComponents_.insert({ currentObjectId, aComp });
 		}
 
 		//spawn enemies
 		else if (levelPlan[i] == 'E') {
 			//create GameObject
-			GameObject enemyObj(currentObjectId, position, (sf::Vector2f)enemyAnimations_[0][0].getSize());
+			GameObject enemyObj(GameObject::EntityType::ENEMY, position, (sf::Vector2f)enemyAnimations_[0][0].getSize());
 
 			//create Components
 			EnemyController cComp(currentObjectId);
-			VisualComponent vComp(currentObjectId, window_, enemyAnimations_);
-			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::ENEMY, 250.f);
+			VisualComponent vComp(window_, enemyAnimations_);
+			PhysicsComponent pComp(enemyObj.GetType(), 250.f);
+			AudioComponent aComp(enemySoundEffects_);
 
 			//store everything
-			gameObjects_.push_back(enemyObj);
-			enemyControllers_.push_back(cComp);
-			visualComponents_.push_back(vComp);
-			physicsComponents_.push_back(pComp);
+			gameObjects_.insert({ currentObjectId, enemyObj });
+			enemyControllers_.insert({ currentObjectId, cComp });
+			visualComponents_.insert({ currentObjectId, vComp });
+			physicsComponents_.insert({ currentObjectId, pComp });
+			audioComponents_.insert({ currentObjectId, aComp });
 		}
 
 		//spawn horizontal doors
 		else if (levelPlan[i] == 'H') {
 			//create GameObject
-			GameObject horDoorObj(currentObjectId, position, (sf::Vector2f)doorHorAnimations_[0][0].getSize());
+			GameObject horDoorObj(GameObject::EntityType::DOOR, position, (sf::Vector2f)doorHorAnimations_[0][0].getSize());
 
 			//create Components
-			VisualComponent vComp(currentObjectId, window_, doorHorAnimations_);
-			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::DOOR);
+			VisualComponent vComp(window_, doorHorAnimations_);
+			PhysicsComponent pComp(horDoorObj.GetType());
+			AudioComponent aComp(doorSoundEffects_);
 
 			//store everything
-			gameObjects_.push_back(horDoorObj);
-			visualComponents_.push_back(vComp);
-			physicsComponents_.push_back(pComp);
+			gameObjects_.insert({ currentObjectId, horDoorObj });
+			visualComponents_.insert({ currentObjectId, vComp });
+			physicsComponents_.insert({ currentObjectId, pComp });
+			audioComponents_.insert({ currentObjectId, aComp });
 		}
 
 		//spawn vertical doors
 		else if (levelPlan[i] == 'V') {
 			//create GameObject
-			GameObject verDoorObj(currentObjectId, position, (sf::Vector2f)doorVerAnimations_[0][0].getSize());
+			GameObject verDoorObj(GameObject::EntityType::DOOR, position, (sf::Vector2f)doorVerAnimations_[0][0].getSize());
 
 			//create Components
-			VisualComponent vComp(currentObjectId, window_, doorVerAnimations_);
-			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::DOOR);
+			VisualComponent vComp(window_, doorVerAnimations_);
+			PhysicsComponent pComp(verDoorObj.GetType());
+			AudioComponent aComp(doorSoundEffects_);
 
 			//store everything
-			gameObjects_.push_back(verDoorObj);
-			visualComponents_.push_back(vComp);
-			physicsComponents_.push_back(pComp);
+			gameObjects_.insert({ currentObjectId, verDoorObj });
+			visualComponents_.insert({ currentObjectId, vComp });
+			physicsComponents_.insert({ currentObjectId, pComp });
+			audioComponents_.insert({ currentObjectId, aComp });
 		}
 
 		//spawn background
 		else if (levelPlan[i] == 'B') {
 			//create GameObject (pass in {0,0} as its position so it spawns in the top left regardless of where the 'B' is in the level plan
-			GameObject backgroundObj(currentObjectId, {0,0}, (sf::Vector2f)backgroundAnimations_[levelId_][0].getSize());
+			GameObject backgroundObj(GameObject::EntityType::BACKGROUND, {0,0}, (sf::Vector2f)backgroundAnimations_[levelId_][0].getSize());
 
 			//create VisualComponent (pass in the levelId as the starting animation to be played)
-			VisualComponent vComp(currentObjectId, window_, backgroundAnimations_, levelId_);
+			VisualComponent vComp(window_, backgroundAnimations_, levelId_);
 
 			//store everything
-			gameObjects_.push_back(backgroundObj);
-			visualComponents_.push_back(vComp);
+			gameObjects_.insert({ currentObjectId, backgroundObj });
+			visualComponents_.insert({ currentObjectId, vComp });
 		}
 
 		currentObjectId++;
@@ -297,18 +304,20 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 
 void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir) {
 	//create GameObject
-	GameObject bulletObj(currentObjectId, startPos, (sf::Vector2f)bulletAnimations_[0][0].getSize(), startDir);
+	GameObject bulletObj(GameObject::EntityType::BULLET, startPos, (sf::Vector2f)bulletAnimations_[0][0].getSize(), startDir);
 
 	//create Components
-	BulletController cComp(currentObjectId);
-	VisualComponent vComp(currentObjectId, window_, bulletAnimations_);
-	PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::BULLET, 1000.f);
+	BulletController cComp;
+	VisualComponent vComp(window_, bulletAnimations_);
+	PhysicsComponent pComp(bulletObj.GetType(), 1000.f);
+	AudioComponent aComp(bulletSoundEffects_);
 
 	//store everything
-	gameObjects_.push_back(bulletObj);
-	bulletControllers_.push_back(cComp);
-	visualComponents_.push_back(vComp);
-	physicsComponents_.push_back(pComp);
+	gameObjects_.insert({ currentObjectId, bulletObj });
+	bulletControllers_.insert({ currentObjectId, cComp });
+	visualComponents_.insert({ currentObjectId, vComp });
+	physicsComponents_.insert({ currentObjectId, pComp });
+	audioComponents_.insert({ currentObjectId, aComp });
 
 	currentObjectId++;
 }
@@ -318,114 +327,78 @@ void Level::CleanUpDeadObjects()
 	//remove dead objects
 	std::vector<int> indexesToBeDeleted;
 
-	for (int o = 0; o < gameObjects_.size(); o++)
+	for (auto& [id, obj] : gameObjects_)
 	{
-		if (gameObjects_[o].CheckDead()) {
+		if (obj.CheckDead()) {
 
-			indexesToBeDeleted.push_back(o);
-			int correctId = gameObjects_[o].GetGameObjectId();
+			indexesToBeDeleted.push_back(id);
 
-			//loop through each Component, identify any Components belonging to the dead GameObject using their id and remove them from their vectors
-			for (int c = 0; c < characterControllers_.size(); c++)
+			//loop through each Component, identify any Components belonging to the dead GameObject using their id and remove them from their maps
+			if (characterControllers_.find(id) != characterControllers_.end()) 
 			{
-				if (characterControllers_[c].GetGameObjectId() == correctId)
-				{
-					characterControllers_.erase(characterControllers_.begin() + c);
-					break;
-				}
-			}
-			for (int b = 0; b < bulletControllers_.size(); b++)
-			{
-				if (bulletControllers_[b].GetGameObjectId() == correctId)
-				{
-					bulletControllers_.erase(bulletControllers_.begin() + b);
-					break;
-				}
+				characterControllers_.erase(id);
 			}
 
-			for (int p = 0; p < physicsComponents_.size(); p++)
+			if (bulletControllers_.find(id) != bulletControllers_.end())
 			{
-				if (physicsComponents_[p].GetGameObjectId() == correctId)
-				{
-					physicsComponents_.erase(physicsComponents_.begin() + p);
-					break;
-				}
+				bulletControllers_.erase(id);
 			}
 
-			for (int v = 0; v < visualComponents_.size(); v++)
+			if (enemyControllers_.find(id) != enemyControllers_.end())
 			{
-				if (visualComponents_[v].GetGameObjectId() == correctId)
-				{
-					visualComponents_.erase(visualComponents_.begin() + v);
-					break;
-				}
+				enemyControllers_.erase(id);
 			}
 
-			for (int a = 0; a < audioComponents_.size(); a++)
+			if (physicsComponents_.find(id) != physicsComponents_.end())
 			{
-				if (audioComponents_[a].GetGameObjectId() == correctId)
-				{
-					audioComponents_.erase(audioComponents_.begin() + a);
-					break;
-				}
+				physicsComponents_.erase(id);
+			}
+
+			if (visualComponents_.find(id) != visualComponents_.end())
+			{
+				visualComponents_.erase(id);
+			}
+
+			if (audioComponents_.find(id) != audioComponents_.end())
+			{
+				audioComponents_.erase(id);
 			}
 		}
 	}
 
-	//sort the destroyed GameObject indexes into descending order
-	std::sort(indexesToBeDeleted.begin(), indexesToBeDeleted.end(), std::greater<int>());
-
-	//finally, remove the dead GameObjects from the GameObject vector
+	//finally, remove the dead GameObjects from the GameObject map
 	for (int i = 0; i < indexesToBeDeleted.size(); i++)
 	{
-		gameObjects_.erase(gameObjects_.begin() + indexesToBeDeleted[i]);
+		gameObjects_.erase(indexesToBeDeleted[i]);
 	}
 }
 
 #pragma region Gameplay Loop
 
 void Level::HandleInput(float const deltaTime) {
+	
 	//update character
-
-	for (int o = 0; o < gameObjects_.size(); o++)
+	for (auto& [id, cComp] : characterControllers_)
 	{
-		if (gameObjects_[o].GetGameObjectId() == characterControllers_[0].GetGameObjectId())
+		if (cComp.HandleInput(gameObjects_.at(id), deltaTime)) //this is really bad, need to think of a better way to spawn bullets
 		{
-			if (characterControllers_[0].HandleInput(gameObjects_[o], deltaTime)) //this is really bad, need to think of a better way to spawn bullets
-			{
-				sf::Angle startAngle = gameObjects_[o].GetRotation();
-				sf::Vector2f startDir = { cos(startAngle.asRadians()), sin(startAngle.asRadians()) };
+			sf::Angle startAngle = gameObjects_.at(id).GetRotation();
+			sf::Vector2f startDir = { cos(startAngle.asRadians()), sin(startAngle.asRadians()) };
 
-				SpawnBullet(gameObjects_[o].GetCenter(), startDir);
-			}			
-			break;
+			SpawnBullet(gameObjects_.at(id).GetCenter(), startDir);
 		}
 	}
 
-
-
 	//update enemies
-	for (int e = 0; e < enemyControllers_.size(); e++)
+	for (auto& [id, cComp] : enemyControllers_)
 	{
-		for (int o = 0; o < gameObjects_.size(); o++)
-		{
-			if (gameObjects_[o].GetGameObjectId() == enemyControllers_[e].GetGameObjectId())
-			{
-				enemyControllers_[e].HandleInput(gameObjects_[o], deltaTime);
-			}
-		}
+		cComp.HandleInput(gameObjects_.at(id), deltaTime);
 	}
 
 	//update bullets
-	for (int b = 0; b < bulletControllers_.size(); b++)
-	{
-		for (int o = 0; o < gameObjects_.size(); o++)
-		{
-			if (gameObjects_[o].GetGameObjectId() == bulletControllers_[b].GetGameObjectId())
-			{
-				bulletControllers_[b].HandleInput(gameObjects_[o], deltaTime);
-			}
-		}
+	for (auto& [id, cComp] : bulletControllers_)
+	{	
+		cComp.HandleInput(gameObjects_.at(id), deltaTime);
 	}
 }
 
@@ -435,35 +408,23 @@ void Level::Update(float const deltaTime) {
 	CleanUpDeadObjects();
 
 	//update all the PhysicsComponents
-	for (int p = 0; p < physicsComponents_.size(); p++) //loop every PhysicsComponent
+	for (auto& [id, pComp] : physicsComponents_)
 	{
-		for (int o = 0; o < gameObjects_.size(); o++) //loop every GameObject
-		{
-			if (gameObjects_[o].GetGameObjectId() == physicsComponents_[p].GetGameObjectId()) //find the PhysicsComponent's GameObject by comparing their ids
-			{
-				physicsComponents_[p].Update(gameObjects_[o], deltaTime, physicsComponents_); //update the PhysicsComponent, passing it a reference to its GameObject
-			}
-		}
+		pComp.Update(gameObjects_.at(id), deltaTime, physicsComponents_);
 	}
 
 	//update all the AudioComponents
-	//for (int a = 0; a < audioComponents_.size(); a++)
-	//{
-	//	audioComponents_[a].Update();
-	//}
+	for (auto& [id, aComp] : audioComponents_)
+	{
+		aComp.Update(gameObjects_.at(id));
+	}
 }
 
 void Level::Draw(float const deltaTime) {
 
-	for (int v = 0; v < visualComponents_.size(); v++)
+	for (auto& [id, vComp] : visualComponents_)
 	{
-		for (int o = 0; o < gameObjects_.size(); o++)
-		{
-			if (gameObjects_[o].GetGameObjectId() == visualComponents_[v].GetGameObjectId())
-			{
-				visualComponents_[v].Update(gameObjects_[o], deltaTime);
-			}
-		}
+		vComp.Update(gameObjects_.at(id), deltaTime);
 	}
 }
 

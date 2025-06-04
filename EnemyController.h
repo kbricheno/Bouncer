@@ -3,7 +3,7 @@
 
 class EnemyController : public ControllerComponent {
 public:
-	EnemyController(int const objId) : objId_(objId) 
+	EnemyController(int objId)
 	{
 		srand(objId);
 		currentDirection_ = directions_[rand() % 4];
@@ -12,13 +12,9 @@ public:
 
 	bool HandleInput(GameObject& obj, float const deltaTime);
 
-	int const GetGameObjectId() const { return objId_; }
-
 	sf::Vector2f ChangeDirection();
 
 private:
-	int objId_;
-
 	bool active_ = true;
 	std::vector<sf::Vector2f> directions_ = { sf::Vector2f(1.f,0.f), sf::Vector2f(-1.f,0.f), sf::Vector2f(0.f,1.f), sf::Vector2f(0.f, -1.f) };
 	sf::Vector2f currentDirection_;

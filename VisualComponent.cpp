@@ -3,18 +3,26 @@
 
 void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	
-	//if a new animation has been set, push it onto the stack and play it from frame 0
-	if (obj.GetCurrentAnimation() != animationStack.top()) 
+	//on the first update call, set up elements that couldn't be set up in the constructor
+	if (setup) 
 	{
-		animationStack.push(obj.GetCurrentAnimation());
+		obj.AddAnimationToStack(startAnim_, 0); //add & loop the starting animation
+		sprites_[0].setOrigin(sprites_[0].getLocalBounds().size / 2.f); //set the sprite's origin to its center
+		setup = false;
+	}
+
+	//if a new animation has been set, play it from frame 0
+	if (obj.GetCurrentAnimation() != previousAnimation_) 
+	{
 		currentFrame_ = 0;
+		previousAnimation_ = obj.GetCurrentAnimation();
 	}
 	else 
 	{
-		if (timeElapsedSinceLastFrame_ >= 1.f / animationFrameRate) //1/animationFrameRate gives seconds per frame
+		if (timeElapsedSinceLastFrame_ >= 1.f / animationFrameRate_) //1/animationFrameRate gives seconds per frame
 		{
 			//increment current frame by 1 until the entire animation has played through
-			if (currentFrame_ < animations_[animationStack.top()].size() - 1)
+			if (currentFrame_ < animations_[obj.GetCurrentAnimation()].size() - 1)
 			{
 				currentFrame_++;
 			}
@@ -23,10 +31,10 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 			{
 				currentFrame_ = obj.GetAnimationLoopFrame();
 			}
-			//if the animation does not loop, pop it out of the stack
+			//if the animation does not loop, pop it out of the stack and update the GameObject about which animation is currently playing
 			else 
 			{
-				animationStack.pop();
+				obj.RemoveAnimationFromStack();
 			}
 			
 			//reset the timer
@@ -38,16 +46,11 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	timeElapsedSinceLastFrame_ += deltaTime;
 
 	//set the sprite to use the correct frame from the correct animation
-	sprites_[0].setTexture(animations_[animationStack.top()][currentFrame_]);
+	sprites_[0].setTexture(animations_[obj.GetCurrentAnimation()][currentFrame_]);
 			
-	//every sprite's origin is set to its center, so offset the true (collider's) position by half of the sprite's size (used for rotating sprites)
-	obj.SetCenter(obj.GetColliderPosition() + sprites_[0].getLocalBounds().size / 2.f);
-
 	//move and draw the Sprite
-	sprites_[0].setPosition(obj.GetSpritePosition());
+	sprites_[0].setPosition(obj.GetCenter());
 	sprites_[0].setRotation(obj.GetRotation());
-
-	std::cout << sprites_[0].getPosition().x << ", " << sprites_[0].getPosition().y << "\n";
 
 	window_->draw(sprites_[0]);
 }
