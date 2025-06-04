@@ -15,5 +15,4 @@ private:
 	int objId_;
 
 	int maxBounces_ = 2;
-	int currentBounce_ = 0;
 };

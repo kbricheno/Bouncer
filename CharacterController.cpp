@@ -11,7 +11,7 @@ bool CharacterController::HandleInput(GameObject &obj, float const deltaTime) {
     //update the GameObject's rotation_ variable based on the handled input (mouse position, obj position)
     obj.SetRotation(CalculateRotation(obj.GetCenter()));
     //update the GameObject's currentAnimation_ variable based on the handled input (state) 
-    obj.SetCurrentAnimation(CalculateAnimation());
+    CalculateAnimation(obj);
 
     shootAnimationTimer -= deltaTime;
     reloadAnimationTimer -= deltaTime;
@@ -119,23 +119,23 @@ sf::Vector2f CharacterController::CalculateDirection() {
     return { newDirX, newDirY };
 }
 
-int CharacterController::CalculateAnimation() {
+void CharacterController::CalculateAnimation(GameObject &obj) {
     switch (state_)
     {
     case CharacterController::CharacterState::IDLING:
-        return 0;
+        obj.SetCurrentAnimation(0, 0);
         break;
     case CharacterController::CharacterState::WALKING:
-        return 1;
+        obj.SetCurrentAnimation(1, 0);
         break;
     case CharacterController::CharacterState::SHOOTING:
-        return 2;
+        obj.SetCurrentAnimation(2);
         break;
     case CharacterController::CharacterState::RELOADING:
-        return 3;
+        obj.SetCurrentAnimation(3);
         break;
     default:
-        return 0;
+        obj.SetCurrentAnimation(0, 0);
         break;
     }
 }

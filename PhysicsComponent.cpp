@@ -8,15 +8,18 @@ void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::vecto
 	{
 	case ColliderType::PLAYER:
 		Move(obj, deltaTime, allPhysicsComponents);
+		ResolveInteraction(obj, allPhysicsComponents);
 		break;
 	case ColliderType::ENEMY:
 		Move(obj, deltaTime, allPhysicsComponents);
+		ResolveInteraction(obj, allPhysicsComponents);
 		break;
 	case ColliderType::BULLET:
 		Move(obj, deltaTime, allPhysicsComponents);
+		ResolveInteraction(obj, allPhysicsComponents);
 		break;
 	case ColliderType::DOOR:
-		//ResolveInteraction(allColliders, hitbox);
+		ResolveInteraction(obj, allPhysicsComponents);
 		break;
 	default:
 		break;
@@ -124,73 +127,88 @@ void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::vecto
 	if (!collisionDetected) obj.SetColliderPosition(collider_.position);
 }
 
-//void PhysicsComponent::ResolveInteraction(std::vector<PhysicsComponent> const &allColliders, sf::FloatRect hitbox) {
-//	for (int i = 0; i < allColliders.size(); i++)
-//	{
-//		//can't interact with any collider without a hitbox
-//		if (allColliders[i].GetHitbox() == sf::FloatRect({ 0,0 }, { 0, 0 })) return;
-//
-//		if (hitbox_.findIntersection(allColliders[i].GetHitbox())) {
-//			ColliderType otherType = allColliders[i].type_;
-//
-//			//better way to write a collision matrix?
-//			switch (type_)
-//			{
-//			case ColliderType::PLAYER:
-//				switch (otherType)
-//				{
-//				case ColliderType::ENEMY:
-//					//kill self
-//					break;
-//				case ColliderType::BULLET:
-//					//kill self
-//					break;
-//				default:
-//					break;
-//				}
-//				break;
-//			case ColliderType::BULLET:
-//				switch (otherType)
-//				{
-//				case ColliderType::PLAYER:
-//					//kill self
-//					break;
-//				case ColliderType::ENEMY:
-//					//kill self
-//					break;
-//				case ColliderType::DOOR:
-//					//kill self
-//					break;
-//				default:
-//					break;
-//				}
-//				break;
-//			case ColliderType::ENEMY:
-//				switch (otherType)
-//				{
-//				case ColliderType::ENEMY:
-//					//check if enemy is dead -> game over
-//					break;
-//				case ColliderType::BULLET:
-//					//kill self
-//					break;
-//				default:
-//					break;
-//				}
-//				break;
-//			case ColliderType::DOOR:
-//				switch (otherType)
-//				{
-//				case ColliderType::BULLET:
-//					//kill self
-//					break;
-//				default:
-//					break;
-//				}
-//				break;
-//			default:
-//				break;
-//			}
-//		}
-//	}
-//}
+void PhysicsComponent::ResolveInteraction(GameObject &obj, std::vector<PhysicsComponent> const &allPhysicsComponents) {
+	for (int i = 0; i < allPhysicsComponents.size(); i++)
+	{
+		//condition: don't check for interactions with yourself
+		if (allPhysicsComponents[i].hitbox_ != hitbox_)
+		{
+			sf::FloatRect otherHitbox = allPhysicsComponents[i].hitbox_;
+
+			if (hitbox_.findIntersection(otherHitbox)) 
+			{
+				ColliderType otherType = allPhysicsComponents[i].type_;
+
+				//better way to write a collision matrix?
+				switch (type_)
+				{
+				case ColliderType::BULLET:
+					switch (otherType)
+					{
+					case ColliderType::PLAYER:
+						//if the bullet has bounced at least once (prevents triggering immediately on bullet spawn), destroy it & call game over
+						if (obj.GetBulletBounceCount() > 0) 
+						{
+							obj.Kill();
+							//game over
+						}
+						break;
+					case ColliderType::ENEMY:
+						obj.Kill();
+						break;
+					case ColliderType::DOOR:
+						obj.Kill();
+						break;
+					default:
+						break;
+					}
+					break;
+
+				case ColliderType::ENEMY:
+					switch (otherType)
+					{
+					case ColliderType::PLAYER:
+						//if the enemy is alive, the player is detected -> game over
+						if (!obj.CheckHitByBullet())
+						{
+							//game over
+						}
+						break;
+					case ColliderType::ENEMY:
+						//if the other enemy is dead, this enemy detects the player's presence -> game over
+						if (obj.CheckHitByBullet()) 
+						{
+							//game over
+						}
+						break;
+					case ColliderType::BULLET:
+						//"kill" the enemy without destroying it
+						if (!obj.CheckHitByBullet()) 
+						{
+							obj.NotifyHitByBullet(true);
+						}
+						break;
+					default:
+						break;
+					}
+					break;
+
+				case ColliderType::DOOR:
+					switch (otherType)
+					{
+					case ColliderType::BULLET:
+						//switch animation, make collider non-solid so player can pass through
+						obj.SetCurrentAnimation(1, 0);
+						solid_ = false;
+						break;
+					default:
+						break;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+}

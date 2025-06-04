@@ -2,33 +2,60 @@
 #include <iostream>
 
 bool EnemyController::HandleInput(GameObject &obj, float const deltaTime) {
-	obj.SetDirection(currentDirection_);
-	obj.SetRotation(currentDirection_.angle());
-
-	randomTurnTimer_ -= deltaTime;
-	stopTimer_ -= deltaTime;
-
-	if (!turning_) //if enemy isn't already turning
+	
+	//if the enemy is "alive"
+	if (active_)
 	{
-		//if enemy randomly decides to turn or collides with a wall
-		if (randomTurnTimer_ <= 0 || obj.CheckHorizontalCollision() || obj.CheckVerticalCollision())
-		{
-			//start the stop timer before changing direction
-			stopTimer_ = (rand() % 2) + 1;
-			turning_ = true;
+		obj.SetDirection(currentDirection_);
+		obj.SetRotation(currentDirection_.angle());
 
-			//reset the collision bools and turn timer
-			obj.NotifyHorizontalCollision(false);
-			obj.NotifyVerticalCollision(false);
-			randomTurnTimer_ = (rand() % 5) + 3 + stopTimer_;
+		//movement/direction updating
+		if (!turning_) //if enemy isn't already turning
+		{
+			randomTurnTimer_ -= deltaTime;
+
+			//if enemy randomly decides to turn or collides with a wall
+			if (randomTurnTimer_ <= 0 || obj.CheckHorizontalCollision() || obj.CheckVerticalCollision())
+			{
+				//start the stop timer before changing direction
+				stopTimer_ = (rand() % 3) + 1;
+				turning_ = true;
+
+				//reset the collision bools and turn timer
+				obj.NotifyHorizontalCollision(false);
+				obj.NotifyVerticalCollision(false);
+				randomTurnTimer_ = (rand() % 5) + 3;
+
+				//stop moving to prevent further collision detection
+				obj.SetDirection({ 0,0 });
+			}
 		}
-	}
-	else
-	{
-		if (stopTimer_ <= 0)
+		else
 		{
-			currentDirection_ = ChangeDirection();
-			turning_ = false;
+			//stop moving to prevent further collision detection
+			obj.SetDirection({ 0,0 });
+
+			//pause for a few seconds before changing direction
+			stopTimer_ -= deltaTime;
+
+			if (stopTimer_ <= 0)
+			{
+				currentDirection_ = ChangeDirection();
+				turning_ = false;
+			}
+		}
+
+
+		//death event update
+		if (obj.CheckHitByBullet())
+		{
+			active_ = false;
+
+			//stop moving
+			obj.SetDirection({ 0,0 });
+
+			//play the dying animation, loop the final frame
+			obj.SetCurrentAnimation(1, 3);
 		}
 	}
 
@@ -39,6 +66,7 @@ sf::Vector2f EnemyController::ChangeDirection() {
 	
 	sf::Vector2f nextDirection;
 
+	//temporarily remove the current direction from the vector of directions to choose from
 	for (int i = 0; i < directions_.size(); i++)
 	{
 		if (directions_[i] == currentDirection_)
@@ -48,7 +76,10 @@ sf::Vector2f EnemyController::ChangeDirection() {
 		}
 	}
 
+	//pick a direction at random
 	nextDirection = directions_[rand() % 3];
+
+	//return the removed direction to the vector
 	directions_.push_back(currentDirection_);	
 	
 	return nextDirection;

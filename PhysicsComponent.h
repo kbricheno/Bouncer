@@ -73,7 +73,7 @@ public:
 	//movement & collision checking
 	void Move(GameObject& obj, float const deltaTime, std::vector<PhysicsComponent> const &allPhysicsComponents);
 	void ResolveCollisions(GameObject &obj, bool xAxis, std::vector<PhysicsComponent> const &allPhysicsComponents);
-	//void ResolveInteraction(std::vector<PhysicsComponent> const &allColliders, sf::FloatRect hitbox);
+	void ResolveInteraction(GameObject &obj, std::vector<PhysicsComponent> const &allPhysicsComponents);
 
 	//getters
 

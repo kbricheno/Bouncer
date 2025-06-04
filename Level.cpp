@@ -6,12 +6,12 @@ Level::Level(sf::RenderWindow* const window, const int levelId, const int tileSi
 	levelId_ = levelId;
 	window_ = window;
 
-	GenerateTexturesAndSprites();
+	GenerateTextures();
 	GenerateLevel(tileSize, levelWidth, levelHeight, levelPlan);
 }
 
-//create all Textures & Sprites, store them in vector (here rather than on a GameObject or Component so we only create 1 set of each Texture/Sprite for the entire level)
-void Level::GenerateTexturesAndSprites() {
+//create all Textures, store them in vectors (here rather than on a GameObject or Component so we only create 1 set of each Texture for the entire level)
+void Level::GenerateTextures() {
 	
 	//player animations .....................................................................................................................................................
 	//create vectors representing individual animations -- each will hold a number of frames (images) making up the animation
@@ -63,7 +63,7 @@ void Level::GenerateTexturesAndSprites() {
 
 	//enemy animations .....................................................................................................................................................
 	std::vector<sf::Texture> enemyWalkTextures_;
-	std::vector<sf::Texture> enemyDeadTextures_;
+	std::vector<sf::Texture> enemyDyingTextures_;
 
 	//walking
 	for (int i = 1; i <= 10; i++)
@@ -73,13 +73,13 @@ void Level::GenerateTexturesAndSprites() {
 	}
 	enemyAnimations_.push_back(enemyWalkTextures_);
 
-	//dead
+	//dying
 	for (int i = 1; i <= 4; i++)
 	{
-		fileName = "Assets/Guard/death/" + std::to_string(i) + ".png";
-		enemyDeadTextures_.push_back(sf::Texture(fileName));
+		fileName = "Assets/Guard/dying/" + std::to_string(i) + ".png";
+		enemyDyingTextures_.push_back(sf::Texture(fileName));
 	}
-	enemyAnimations_.push_back(enemyDeadTextures_);
+	enemyAnimations_.push_back(enemyDyingTextures_);
 
 
 	//bullet Texture .....................................................................................................................................................
@@ -88,13 +88,44 @@ void Level::GenerateTexturesAndSprites() {
 	bulletIdleTextures_.push_back(sf::Texture("Assets/Player/bullet.png"));
 	bulletAnimations_.push_back(bulletIdleTextures_);
 
+
 	//door animations .....................................................................................................................................................
+	std::vector<sf::Texture> horizontalDoorClosedTextures_;
+	horizontalDoorClosedTextures_.push_back(sf::Texture("Assets/Environment/doorHor.png"));
+	doorHorAnimations_.push_back(horizontalDoorClosedTextures_);
+
+	std::vector<sf::Texture> horizontalDoorOpenTextures_;	
+	horizontalDoorOpenTextures_.push_back(sf::Texture("Assets/Environment/doorHorBroken.png"));
+	doorHorAnimations_.push_back(horizontalDoorOpenTextures_);
+
+	std::vector<sf::Texture> verticalDoorClosedTextures_;
+	verticalDoorClosedTextures_.push_back(sf::Texture("Assets/Environment/doorVer.png"));
+	doorVerAnimations_.push_back(verticalDoorClosedTextures_);
+
+	std::vector<sf::Texture> verticalDoorOpenTextures_;
+	verticalDoorOpenTextures_.push_back(sf::Texture("Assets/Environment/doorVerBroken.png"));
+	doorVerAnimations_.push_back(verticalDoorOpenTextures_);
 
 
 	//wall Texture .....................................................................................................................................................
 	std::vector<sf::Texture> wallIdleTextures_;
 	wallIdleTextures_.push_back(sf::Texture("Assets/Environment/wall.png"));
 	wallAnimations_.push_back(wallIdleTextures_);
+
+
+	//background Textures .....................................................................................................................................................
+	std::vector<sf::Texture> background1Texture_;
+	background1Texture_.push_back(sf::Texture("Assets/Environment/map1.png"));
+	backgroundAnimations_.push_back(background1Texture_);
+
+	std::vector<sf::Texture> background2Texture_;
+	background1Texture_.push_back(sf::Texture("Assets/Environment/map2.png"));
+	backgroundAnimations_.push_back(background2Texture_);
+
+	std::vector<sf::Texture> background3Texture_;
+	background1Texture_.push_back(sf::Texture("Assets/Environment/map3.png"));
+	backgroundAnimations_.push_back(background3Texture_);
+
 }
 
 void Level::GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan) {
@@ -105,7 +136,7 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 	{
 		sf::Vector2f position(currentX * tileSize, currentY * tileSize);
 
-		//spawn wall
+		//spawn walls
 		if (levelPlan[i] == 'W')
 		{
 			//create GameObject, pass in its id and position
@@ -140,7 +171,7 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 			physicsComponents_.push_back(pComp);
 		}
 
-		//spawn enemy
+		//spawn enemies
 		else if (levelPlan[i] == 'E') {
 			//create GameObject
 			GameObject enemyObj(currentObjectId, position, (sf::Vector2f)enemyAnimations_[0][0].getSize());
@@ -157,10 +188,48 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 			physicsComponents_.push_back(pComp);
 		}
 
-		//spawn door
+		//spawn horizontal doors
+		else if (levelPlan[i] == 'H') {
+			//create GameObject
+			GameObject horDoorObj(currentObjectId, position, (sf::Vector2f)doorHorAnimations_[0][0].getSize());
 
+			//create Components
+			VisualComponent vComp(currentObjectId, window_, doorHorAnimations_);
+			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::DOOR);
+
+			//store everything
+			gameObjects_.push_back(horDoorObj);
+			visualComponents_.push_back(vComp);
+			physicsComponents_.push_back(pComp);
+		}
+
+		//spawn vertical doors
+		else if (levelPlan[i] == 'V') {
+			//create GameObject
+			GameObject verDoorObj(currentObjectId, position, (sf::Vector2f)doorVerAnimations_[0][0].getSize());
+
+			//create Components
+			VisualComponent vComp(currentObjectId, window_, doorVerAnimations_);
+			PhysicsComponent pComp(currentObjectId, PhysicsComponent::ColliderType::DOOR);
+
+			//store everything
+			gameObjects_.push_back(verDoorObj);
+			visualComponents_.push_back(vComp);
+			physicsComponents_.push_back(pComp);
+		}
 
 		//spawn background
+		else if (levelPlan[i] == 'B') {
+			//create GameObject (pass in {0,0} as its position so it spawns in the top left regardless of where the 'B' is in the level plan
+			GameObject backgroundObj(currentObjectId, {0,0}, (sf::Vector2f)backgroundAnimations_[levelId_][0].getSize());
+
+			//create VisualComponent (pass in the levelId as the starting animation to be played)
+			VisualComponent vComp(currentObjectId, window_, backgroundAnimations_, levelId_);
+
+			//store everything
+			gameObjects_.push_back(backgroundObj);
+			visualComponents_.push_back(vComp);
+		}
 
 		currentObjectId++;
 
@@ -188,6 +257,75 @@ void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir
 	physicsComponents_.push_back(pComp);
 
 	currentObjectId++;
+}
+
+void Level::CleanUpDeadObjects() 
+{
+	//remove dead objects
+	std::vector<int> indexesToBeDeleted;
+
+	for (int o = 0; o < gameObjects_.size(); o++)
+	{
+		if (gameObjects_[o].CheckDead()) {
+
+			indexesToBeDeleted.push_back(o);
+			int correctId = gameObjects_[o].GetGameObjectId();
+
+			//loop through each Component, identify any Components belonging to the dead GameObject using their id and remove them from their vectors
+			for (int c = 0; c < characterControllers_.size(); c++)
+			{
+				if (characterControllers_[c].GetGameObjectId() == correctId)
+				{
+					characterControllers_.erase(characterControllers_.begin() + c);
+					break;
+				}
+			}
+			for (int b = 0; b < bulletControllers_.size(); b++)
+			{
+				if (bulletControllers_[b].GetGameObjectId() == correctId)
+				{
+					bulletControllers_.erase(bulletControllers_.begin() + b);
+					break;
+				}
+			}
+
+			for (int p = 0; p < physicsComponents_.size(); p++)
+			{
+				if (physicsComponents_[p].GetGameObjectId() == correctId)
+				{
+					physicsComponents_.erase(physicsComponents_.begin() + p);
+					break;
+				}
+			}
+
+			for (int v = 0; v < visualComponents_.size(); v++)
+			{
+				if (visualComponents_[v].GetGameObjectId() == correctId)
+				{
+					visualComponents_.erase(visualComponents_.begin() + v);
+					break;
+				}
+			}
+
+			for (int a = 0; a < audioComponents_.size(); a++)
+			{
+				if (audioComponents_[a].GetGameObjectId() == correctId)
+				{
+					audioComponents_.erase(audioComponents_.begin() + a);
+					break;
+				}
+			}
+		}
+	}
+
+	//sort the destroyed GameObject indexes into descending order
+	std::sort(indexesToBeDeleted.begin(), indexesToBeDeleted.end(), std::greater<int>());
+
+	//finally, remove the dead GameObjects from the GameObject vector
+	for (int i = 0; i < indexesToBeDeleted.size(); i++)
+	{
+		gameObjects_.erase(gameObjects_.begin() + indexesToBeDeleted[i]);
+	}
 }
 
 #pragma region Gameplay Loop
@@ -240,69 +378,7 @@ void Level::HandleInput(float const deltaTime) {
 
 void Level::Update(float const deltaTime) {
 
-	//remove dead objects
-	std::vector<int> indexesToBeDeleted;
-
-	for (int o = 0; o < gameObjects_.size(); o++)
-	{
-		if (gameObjects_[o].CheckDead()) {
-
-			indexesToBeDeleted.push_back(o);
-			int correctId = gameObjects_[o].GetGameObjectId();
-
-			//loop through each Component, identify any Components belonging to the dead GameObject using their id and remove them from their vectors
-			for (int c = 0; c < characterControllers_.size(); c++)
-			{
-				if (characterControllers_[c].GetGameObjectId() == correctId) 
-				{
-					characterControllers_.erase(characterControllers_.begin() + c);
-					break;
-				}
-			}
-			for (int b = 0; b < bulletControllers_.size(); b++)
-			{
-				if (bulletControllers_[b].GetGameObjectId() == correctId)
-				{
-					bulletControllers_.erase(bulletControllers_.begin() + b);
-					break;
-				}
-			}
-
-			for (int p = 0; p < physicsComponents_.size(); p++)
-			{
-				if (physicsComponents_[p].GetGameObjectId() == correctId)
-				{
-					physicsComponents_.erase(physicsComponents_.begin() + p);
-					break;
-				}
-			}
-
-			for (int v = 0; v < visualComponents_.size(); v++)
-			{
-				if (visualComponents_[v].GetGameObjectId() == correctId)
-				{
-					visualComponents_.erase(visualComponents_.begin() + v);
-					break;
-				}
-			}
-
-			for (int a = 0; a < audioComponents_.size(); a++)
-			{
-				if (audioComponents_[a].GetGameObjectId() == correctId)
-				{
-					audioComponents_.erase(audioComponents_.begin() + a);
-					break;
-				}
-			}
-		}
-	}
-
-	//finally, remove the dead GameObjects from the GameObject vector
-	for (int i = 0; i < indexesToBeDeleted.size(); i++)
-	{
-		gameObjects_.erase(gameObjects_.begin() + indexesToBeDeleted[i]);
-	}
-
+	CleanUpDeadObjects();
 
 	//update all the PhysicsComponents
 	for (int p = 0; p < physicsComponents_.size(); p++) //loop every PhysicsComponent

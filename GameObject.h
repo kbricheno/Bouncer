@@ -15,7 +15,7 @@ public:
 		: 
 		gameObjectId_(gameObjectId),
 		colliderPosition_(position),
-		spritePosition_(spriteSize),
+		spritePosition_(spriteSize/2.f),
 		direction_(direction)
 	{}
 	~GameObject() {}
@@ -36,7 +36,8 @@ public:
 	void SetRotation(sf::Angle rotation) { rotation_ = rotation; }
 
 	int GetCurrentAnimation() const { return currentAnimation_; }
-	void SetCurrentAnimation(int currentAnimation) { currentAnimation_ = currentAnimation; }
+	int GetAnimationLoopFrame() const { return animationLoopFrame_; }
+	void SetCurrentAnimation(int currentAnimation, int loopAnimationFromFrame = -1) { currentAnimation_ = currentAnimation; animationLoopFrame_ = loopAnimationFromFrame; }
 
 	void SetSpritePosition(sf::Vector2f spritePosition) { spritePosition_ = spritePosition; }
 	sf::Vector2f GetSpritePosition() const { return spritePosition_; }
@@ -46,8 +47,14 @@ public:
 
 	bool CheckHorizontalCollision() const { return collidedHorizontally_; }
 	void NotifyHorizontalCollision(bool collidedHor) { collidedHorizontally_ = collidedHor; }
-	bool CheckVerticalCollision() const { return collidedVertically; }
-	void NotifyVerticalCollision(bool collidedVer) { collidedVertically = collidedVer; }
+	bool CheckVerticalCollision() const { return collidedVertically_; }
+	void NotifyVerticalCollision(bool collidedVer) { collidedVertically_ = collidedVer; }
+
+	bool CheckHitByBullet() const { return hitByBullet_; }
+	void NotifyHitByBullet(bool hitByBullet) { hitByBullet_ = hitByBullet; }
+
+	int GetBulletBounceCount() const { return bulletBounceCount_; }
+	void SetBulletBounceCount(int bulletBounceCount) { bulletBounceCount_ = bulletBounceCount; }
 
 private:
 	int gameObjectId_;
@@ -58,11 +65,14 @@ private:
 	sf::Vector2f direction_;
 	sf::Vector2f centerPosition_ = { 0,0 };
 	int currentAnimation_ = 0;
+	int animationLoopFrame_ = 0;
 	sf::Angle rotation_ = sf::degrees(0);
 	sf::Vector2f spritePosition_;
 
 	//entity-specific state
 	bool collidedHorizontally_ = false;
-	bool collidedVertically = false;
+	bool collidedVertically_ = false;
+	bool hitByBullet_ = false;
+	int bulletBounceCount_ = 0;
 };
 

@@ -1,11 +1,12 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <stack>
 #include "GameObject.h"
 
 class VisualComponent {
 public:
-	VisualComponent(int const objId, sf::RenderWindow* const window, std::vector<std::vector<sf::Texture>> const &animations) :
+	VisualComponent(int const objId, sf::RenderWindow* const window, std::vector<std::vector<sf::Texture>> const &animations, int startAnim = 0) :
 		objId_(objId),
 		window_(window),
 		animations_(animations)
@@ -13,6 +14,8 @@ public:
 		sf::Sprite sprite(animations.front().front());
 		sprite.setOrigin(sprite.getLocalBounds().size / 2.f);
 		sprites_.push_back(sprite);
+
+		animationStack.push(startAnim);
 	}
 	~VisualComponent() {}
 
@@ -26,7 +29,8 @@ private:
 	sf::RenderWindow* window_;
 
 	std::vector<std::vector<sf::Texture>> animations_;
-	std::vector<sf::Sprite> sprites_; //there's only one sprite per entity but have to use a vector because you can't make an empty container for an object
+	std::vector<sf::Sprite> sprites_; //there's only one sprite per entity but have to use a vector because you can't make an empty container for a single object
+	std::stack<int> animationStack;
 	int animationFrameRate = 10;
 	float timeElapsedSinceLastFrame_ = 0;
 	int lastAnimation_ = 0;

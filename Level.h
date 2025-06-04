@@ -15,10 +15,11 @@ public:
 	Level(sf::RenderWindow* const window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> &levelPlan);
 	~Level() {}
 
-	void GenerateTexturesAndSprites();
+	void GenerateTextures();
 	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
 
 	void SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir);
+	void CleanUpDeadObjects();
 
 	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
@@ -55,6 +56,7 @@ private:
 	std::vector<std::vector<sf::Texture>> enemyAnimations_;
 	std::vector<std::vector<sf::Texture>> bulletAnimations_;
 	std::vector<std::vector<sf::Texture>> wallAnimations_;
-	std::vector<std::vector<sf::Texture>> doorAnimations_;
+	std::vector<std::vector<sf::Texture>> doorHorAnimations_;
+	std::vector<std::vector<sf::Texture>> doorVerAnimations_;
 	std::vector<std::vector<sf::Texture>> backgroundAnimations_;
 };

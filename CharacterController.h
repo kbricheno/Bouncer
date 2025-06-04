@@ -30,7 +30,7 @@ public:
 	bool ReceiveInput(GameObject &obj);
 	sf::Vector2f CalculateDirection();
 	sf::Angle CalculateRotation(sf::Vector2f objDirection);
-	int CalculateAnimation();
+	void CalculateAnimation(GameObject& obj);
 	bool ShootCommand();
 	void ReloadCommand();
 	void ButtonClickCommand();
