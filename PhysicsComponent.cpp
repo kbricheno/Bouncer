@@ -6,7 +6,7 @@ void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<i
 	//perform specific behaviour depending on assigned type
 	switch (obj.GetType())
 	{
-	case GameObject::EntityType::PLAYER:
+	case GameObject::EntityType::CHARACTER:
 		Move(obj, deltaTime, allPhysicsComponents);
 		ResolveInteraction(obj, allPhysicsComponents);
 		break;
@@ -57,8 +57,6 @@ void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int
 	{
 		obj.SetColliderPosition({ newPosX, newPosY });
 	}
-
-	//ResolveInteraction(allColliders, hitbox);
 }
 
 void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
@@ -121,64 +119,6 @@ void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<i
 		}
 	}
 
-	////loop through all PhysicsComponents
-	//for (int i = 0; i < allPhysicsComponents.size(); i++)
-	//{
-	//	//conditions: only check for collisions with PhysicsComponents that have solid colliders, and don't check for collisions with yourself
-	//	if (allPhysicsComponents[i].solid_ && allPhysicsComponents[i].collider_ != collider_)
-	//	{
-	//		sf::FloatRect otherCollider = allPhysicsComponents[i].collider_;
-
-	//		//check for overlap with the other collider
-	//		if (collider_.findIntersection(otherCollider))
-	//		{
-	//			collisionDetected = true;
-
-	//			//create floats ready to push this collider out of the other collider
-	//			float pushedOutX = collider_.position.x, pushedOutY = collider_.position.y;
-
-	//			if (xAxis) //check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
-	//			{
-	//				if (obj.GetDirection().x > 0) // moving right
-	//				{
-	//					//TODO: update this when we swap to using rects' centers as their origins/positions
-	//					pushedOutX = otherCollider.position.x - collider_.size.x;
-	//				}
-	//				else if (obj.GetDirection().x < 0) // moving left
-	//				{
-	//					pushedOutX = otherCollider.position.x + otherCollider.size.x;
-	//				}
-
-	//				//some entities have additional behaviour when they collide with a solid object
-	//				if (obj.GetType() == GameObject::EntityType::BULLET || obj.GetType() == GameObject::EntityType::ENEMY)
-	//				{
-	//					obj.NotifyHorizontalCollision(true);
-	//				}
-	//			}
-
-	//			else
-	//			{
-	//				if (obj.GetDirection().y > 0) // moving down
-	//				{
-	//					pushedOutY = otherCollider.position.y - collider_.size.y;
-	//				}
-	//				else if (obj.GetDirection().y < 0) // moving up
-	//				{
-	//					pushedOutY = otherCollider.position.y + otherCollider.size.y;
-	//				}
-
-	//				//some entities have additional behaviour when they collide with a solid object
-	//				if (obj.GetType() == GameObject::EntityType::BULLET || obj.GetType() == GameObject::EntityType::ENEMY)
-	//				{
-	//					obj.NotifyVerticalCollision(true);
-	//				}
-	//			}
-	//			//return the corrected position coordinates
-	//			obj.SetColliderPosition({ pushedOutX, pushedOutY });
-	//		}
-	//	}
-	//}
-
 	//if there was no collision, return this collider's position
 	if (!collisionDetected) obj.SetColliderPosition(collider_.position);
 }
@@ -198,7 +138,7 @@ void PhysicsComponent::ResolveInteraction(GameObject &obj, std::map<int, Physics
 				case GameObject::EntityType::BULLET:
 					switch (pComp.type_)
 					{
-					case GameObject::EntityType::PLAYER:
+					case GameObject::EntityType::CHARACTER:
 						//if the bullet has bounced at least once (prevents triggering immediately on bullet spawn), destroy it & call game over
 						if (obj.GetBulletBounceCount() > 0)
 						{
@@ -223,7 +163,7 @@ void PhysicsComponent::ResolveInteraction(GameObject &obj, std::map<int, Physics
 				case GameObject::EntityType::ENEMY:
 					switch (pComp.type_)
 					{
-					case GameObject::EntityType::PLAYER:
+					case GameObject::EntityType::CHARACTER:
 						//if the enemy is alive, the player is detected -> game over
 						if (!obj.CheckHitByBullet())
 						{
@@ -256,10 +196,13 @@ void PhysicsComponent::ResolveInteraction(GameObject &obj, std::map<int, Physics
 					switch (pComp.type_)
 					{
 					case GameObject::EntityType::BULLET:
-						//switch animation, make collider non-solid so player can pass through
-						obj.NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
-						obj.AddAnimationToStack(1, 0);
-						solid_ = false;
+						if (solid_) 
+						{
+							//switch animation, make collider non-solid so player can pass through
+							obj.NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
+							obj.AddAnimationToStack("break", 0);
+							solid_ = false;
+						}
 						break;
 
 					default:
@@ -272,98 +215,4 @@ void PhysicsComponent::ResolveInteraction(GameObject &obj, std::map<int, Physics
 			}
 		}
 	}
-	
-	//for (int i = 0; i < allPhysicsComponents.size(); i++)
-	//{
-	//	//condition: don't check for interactions with yourself
-	//	if (allPhysicsComponents[i].hitbox_ != hitbox_)
-	//	{
-	//		sf::FloatRect otherHitbox = allPhysicsComponents[i].hitbox_;
-
-	//		if (hitbox_.findIntersection(otherHitbox)) 
-	//		{
-	//			//obtain the other hitbox's entity type
-	//			GameObject::EntityType otherType = allPhysicsComponents[i].type_;
-
-	//			//better way to write a collision matrix?
-	//			//identify this Component's entity type, identify the other Component's entity type, then resolve interaction
-	//			switch (obj.GetType())
-	//			{
-	//			case GameObject::EntityType::BULLET:
-	//				switch (otherType)
-	//				{
-	//				case GameObject::EntityType::PLAYER:
-	//					//if the bullet has bounced at least once (prevents triggering immediately on bullet spawn), destroy it & call game over
-	//					if (obj.GetBulletBounceCount() > 0) 
-	//					{
-	//						obj.Kill();
-	//						//trigger game over
-	//					}
-	//					break;
-
-	//				case GameObject::EntityType::ENEMY:
-	//					obj.Kill();
-	//					break;
-
-	//				case GameObject::EntityType::DOOR:
-	//					obj.Kill();
-	//					break;
-
-	//				default:
-	//					break;
-	//				}
-	//				break;
-
-	//			case GameObject::EntityType::ENEMY:
-	//				switch (otherType)
-	//				{
-	//				case GameObject::EntityType::PLAYER:
-	//					//if the enemy is alive, the player is detected -> game over
-	//					if (!obj.CheckHitByBullet())
-	//					{
-	//						//game over
-	//					}
-	//					break;
-
-	//				case GameObject::EntityType::ENEMY:
-	//					//if the other enemy is dead, this enemy detects the player's presence -> game over
-	//					if (obj.CheckHitByBullet()) 
-	//					{
-	//						//game over
-	//					}
-	//					break;
-
-	//				case GameObject::EntityType::BULLET:
-	//					//"kill" the enemy without destroying it
-	//					if (!obj.CheckHitByBullet()) 
-	//					{
-	//						obj.NotifyHitByBullet(true);
-	//					}
-	//					break;
-
-	//				default:
-	//					break;
-	//				}
-	//				break;
-
-	//			case GameObject::EntityType::DOOR:
-	//				switch (otherType)
-	//				{
-	//				case GameObject::EntityType::BULLET:
-	//					//switch animation, make collider non-solid so player can pass through
-	//					obj.NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
-	//					obj.AddAnimationToStack(1, 0);
-	//					solid_ = false;
-	//					break;
-
-	//				default:
-	//					break;
-	//				}
-	//				break;
-	//			default:
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
 }

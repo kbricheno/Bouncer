@@ -25,7 +25,7 @@ int main()
     sf::Text debugText(f);
 
     gm.SetupWindow(&window);
-    gm.ReadLevels(levelsFile);
+    gm.PrepareLevelGeneration(levelsFile);
 
     while (window.isOpen()) 
     {

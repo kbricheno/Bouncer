@@ -14,21 +14,32 @@
 
 class Level {
 public:
-	Level(sf::RenderWindow* const window, const int levelId, const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char> &levelPlan);
+	Level(sf::RenderWindow* const window,
+		const int levelId, const int tileSize,
+		const int levelWidth, const int levelHeight,
+		const std::vector<char> &levelPlan,
+		const std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> &allAnimations,
+		const std::map<std::string, std::map<std::string, sf::SoundBuffer>> &allSoundEffects)
+		:
+		levelId_(levelId),
+		window_(window),
+		allAnimations_(allAnimations),
+		allSoundEffects_(allSoundEffects)
+	{
+		GenerateLevel(tileSize, levelWidth, levelHeight, levelPlan);
+	}
 	~Level() {}
 
-	void GenerateTextures();
-	bool GenerateSoundEffects();
 	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
 
 	void SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir);
 	void CleanUpDeadObjects();
 
+	//game loop
 	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
 	void Draw(float const deltaTime);
 
-	//getters
 	int GetLevelId() const { return levelId_; }
 
 private:
@@ -49,20 +60,9 @@ private:
 	std::map<int, VisualComponent> visualComponents_;
 	std::map<int, AudioComponent> audioComponents_;
 
-	//textures
-	std::vector<std::vector<sf::Texture>> characterAnimations_;
-	std::vector<std::vector<sf::Texture>> enemyAnimations_;
-	std::vector<std::vector<sf::Texture>> bulletAnimations_;
-	std::vector<std::vector<sf::Texture>> wallAnimations_;
-	std::vector<std::vector<sf::Texture>> doorHorAnimations_;
-	std::vector<std::vector<sf::Texture>> doorVerAnimations_;
-	std::vector<std::vector<sf::Texture>> backgroundAnimations_;
+	//reference to all textures
+	std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> const &allAnimations_;
 
-	//sounds
-	std::map<std::string, sf::SoundBuffer> characterSoundEffects_;
-	std::map<std::string, sf::SoundBuffer> enemySoundEffects_;
-	std::map<std::string, sf::SoundBuffer> bulletSoundEffects_;
-	std::map<std::string, sf::SoundBuffer> doorSoundEffects_;
-	std::map<std::string, sf::SoundBuffer> globalSoundEffects;
-
+	//reference to all sound effects
+	std::map<std::string, std::map<std::string, sf::SoundBuffer>> const &allSoundEffects_;
 };

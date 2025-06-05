@@ -6,9 +6,6 @@ bool EnemyController::HandleInput(GameObject &obj, float const deltaTime) {
 	//if the enemy is "alive"
 	if (active_)
 	{
-		obj.SetDirection(currentDirection_);
-		obj.SetRotation(currentDirection_.angle());
-
 		//movement/direction updating
 		if (!turning_) //if enemy isn't already turning
 		{
@@ -28,6 +25,12 @@ bool EnemyController::HandleInput(GameObject &obj, float const deltaTime) {
 
 				//stop moving to prevent further collision detection
 				obj.SetDirection({ 0,0 });
+
+				//remove the walk animation so the idle beneath it plays
+				if (obj.GetCurrentAnimation() == "walk") 
+				{
+					obj.RemoveAnimationFromStack();
+				}
 			}
 		}
 		else
@@ -41,10 +44,18 @@ bool EnemyController::HandleInput(GameObject &obj, float const deltaTime) {
 			if (stopTimer_ <= 0)
 			{
 				currentDirection_ = ChangeDirection();
+				obj.SetDirection(currentDirection_);
+				obj.SetRotation(currentDirection_.angle());
+
+				//set animation to walk if it's not already playing
+				if (obj.GetCurrentAnimation() != "walk") 
+				{
+					obj.AddAnimationToStack("walk", 0);
+				}
+
 				turning_ = false;
 			}
 		}
-
 
 		//death event update
 		if (obj.CheckHitByBullet())
@@ -55,7 +66,7 @@ bool EnemyController::HandleInput(GameObject &obj, float const deltaTime) {
 			obj.SetDirection({ 0,0 });
 
 			//play the dying animation, loop the final frame
-			obj.AddAnimationToStack(1, 3);
+			obj.AddAnimationToStack("die", 3);
 
 			//tell the AudioComponent to play a sound
 			obj.NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);

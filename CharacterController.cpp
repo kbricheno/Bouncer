@@ -104,7 +104,7 @@ sf::Vector2f CharacterController::CalculateDirection(GameObject &obj) {
         //the idling animation is 0 which for every object is always at the bottom of the animation stack, looping forever
         //if the character is currently walking, pop the walking animation out to enable the idling animation to play
         //idling should only ever interrupt walking, not shooting or reloading (shooting/reloading don't loop so they pop themselves out of the stack when finished)
-        if (obj.GetCurrentAnimation() == 1)
+        if (obj.GetCurrentAnimation() == "walk")
         {
             obj.RemoveAnimationFromStack();
         }
@@ -112,9 +112,9 @@ sf::Vector2f CharacterController::CalculateDirection(GameObject &obj) {
     else //if there's direction (input), character is walking
     {
         //only interrupt the idling animation, not shooting or reloading
-        if (obj.GetCurrentAnimation() == 0) 
+        if (obj.GetCurrentAnimation() == "idle")
         {
-            obj.AddAnimationToStack(1, 0);
+            obj.AddAnimationToStack("walk", 0);
         }
     }
 
@@ -146,10 +146,13 @@ bool CharacterController::ShootCommand(GameObject &obj) {
     if (characterCurrentBullets <= 0) return false;
 
     //prevent shooting while reloading
-    if (obj.GetCurrentAnimation() == 3) return false;
+    if (obj.GetCurrentAnimation() == "reload") return false;
 
     //change animation
-    obj.AddAnimationToStack(2);
+    if (obj.GetCurrentAnimation() != "shoot") 
+    {
+        obj.AddAnimationToStack("shoot");
+    }
 
     //play a sound
     obj.NotifySoundEvent(GameObject::SoundEvent::CHARACTER_SHOOT);
@@ -163,8 +166,15 @@ bool CharacterController::ShootCommand(GameObject &obj) {
 }
 
 void CharacterController::ReloadCommand(GameObject &obj) {
+
+    //prevent reloading when character has full ammo
+    if (characterCurrentBullets == characterMaxBullets) return;
+
     //change animation
-    obj.AddAnimationToStack(3);
+    if (obj.GetCurrentAnimation() != "reload") 
+    {
+        obj.AddAnimationToStack("reload");
+    }
 
     //play a sound
     obj.NotifySoundEvent(GameObject::SoundEvent::CHARACTER_RELOAD);

@@ -22,7 +22,7 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 		if (timeElapsedSinceLastFrame_ >= 1.f / animationFrameRate_) //1/animationFrameRate gives seconds per frame
 		{
 			//increment current frame by 1 until the entire animation has played through
-			if (currentFrame_ < animations_[obj.GetCurrentAnimation()].size() - 1)
+			if (currentFrame_ < animations_.at(obj.GetCurrentAnimation()).size() - 1)
 			{
 				currentFrame_++;
 			}
@@ -35,6 +35,7 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 			else 
 			{
 				obj.RemoveAnimationFromStack();
+				currentFrame_ = 0;
 			}
 			
 			//reset the timer
@@ -46,7 +47,7 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	timeElapsedSinceLastFrame_ += deltaTime;
 
 	//set the sprite to use the correct frame from the correct animation
-	sprites_[0].setTexture(animations_[obj.GetCurrentAnimation()][currentFrame_]);
+	sprites_[0].setTexture(animations_.at(obj.GetCurrentAnimation())[currentFrame_]);
 			
 	//move and draw the Sprite
 	sprites_[0].setPosition(obj.GetCenter());

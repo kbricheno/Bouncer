@@ -1,18 +1,20 @@
 #pragma once
 
 #include <fstream>
-
 #include <SFML/Graphics.hpp>
 
 #include "Level.h"
 
 class GameManager {
 public:
-	GameManager(); // receive txt file, spit out allLevels_
+	GameManager();
 	~GameManager() { instantiated_ = false; }
 
 	void SetupWindow(sf::RenderWindow* const window);
-	void ReadLevels(std::ifstream& const levelsFile);
+
+	void PrepareLevelGeneration(std::ifstream& const levelsFile);
+	bool GenerateTextures();
+	bool GenerateSoundEffects();
 
 	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
@@ -35,9 +37,11 @@ private:
 	bool running_ = true;
 	bool paused_ = false;
 
-	// level control variables
-	std::vector<std::vector<char>> allLevels_;
-	
+	//level variables
+	std::vector<std::vector<char>> allLevelPlans_; //used in Level to determine which entity to spawn
+	std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> allAnimations_; //used in Level to pass animations to entities' VisualComponents
+	std::map<std::string, std::map<std::string, sf::SoundBuffer>> allSoundEffects_; //used in Level to pass sound effects to entities' AudioComponents
+
 	bool levelCleared_ = true;
 	std::vector<Level> currentLevel_; // only ever need 1 of these -- is there a way to avoid using a vector? can't define a "null" Level instance to be filled during construction
 

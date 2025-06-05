@@ -10,7 +10,7 @@ class AudioComponent;
 class GameObject {
 public:
 	enum class EntityType {
-		PLAYER,
+		CHARACTER,
 		BULLET,
 		ENEMY,
 		ENEMY_VISION,
@@ -31,7 +31,7 @@ public:
 
 	GameObject(EntityType type,
 		sf::Vector2f const position,
-		sf::Vector2f const spriteSize,
+		sf::Vector2f const spriteSize = sf::Vector2f(),
 		sf::Vector2f const direction = sf::Vector2f())
 		:
 		type_(type),
@@ -57,9 +57,10 @@ public:
 	sf::Angle GetRotation() const { return rotation_; }
 	void SetRotation(sf::Angle rotation) { rotation_ = rotation; }
 
-	int GetCurrentAnimation() const { return animationStack_.top(); }
+	std::string GetCurrentAnimation() const { return animationStack_.top(); }
+	std::stack<std::string> GetStack() const { return animationStack_; }
 	int GetAnimationLoopFrame() const { return loopFrameStack_.top(); }
-	void AddAnimationToStack(int newAnim, int frameToLoopFrom = -1) { animationStack_.push(newAnim); loopFrameStack_.push(frameToLoopFrom); }
+	void AddAnimationToStack(std::string newAnim, int frameToLoopFrom = -1) { animationStack_.push(newAnim); loopFrameStack_.push(frameToLoopFrom); }
 	void RemoveAnimationFromStack() { animationStack_.pop(); loopFrameStack_.pop(); }
 
 	bool CheckDead() const { return dead_; }
@@ -94,7 +95,7 @@ private:
 	sf::Vector2f centerPosition_;
 
 	//currentAnimation_ and animationLoopFrame_ are updated by a ControllerComponent and used by a VisualComponent
-	std::stack<int> animationStack_;
+	std::stack<std::string> animationStack_;
 	std::stack<int> loopFrameStack_;
 
 	//rotation_ is 0 for everything except the character and bullets -- it's updated by a ControllerComponent and used by a VisualComponent

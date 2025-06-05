@@ -12,7 +12,7 @@ public:
 		//create a collider and/or hitbox for each type of physics-affected entity
 		switch (type_)
 		{
-		case GameObject::EntityType::PLAYER:
+		case GameObject::EntityType::CHARACTER:
 			solid_ = false; //determines whether this object's collider prevents other colliders from moving into it
 			collider_ = sf::FloatRect({ 0,0 }, { 40,40 }); //presence of a collider means this object interacts with other colliders
 			hitbox_ = sf::FloatRect({ 0,0 }, { 45,45 }); //presence of a hitbox means this object interacts with other hitboxes
