@@ -1,6 +1,6 @@
 #include "BulletController.h"
 
-bool BulletController::HandleInput(GameObject& obj, float const deltaTime) {
+void BulletController::Update(GameObject& obj, float const deltaTime) {
 
 	if (obj.CheckHorizontalCollision()) //bullet hit a left/right wall
 	{
@@ -25,6 +25,4 @@ bool BulletController::HandleInput(GameObject& obj, float const deltaTime) {
 		obj.SetBulletBounceCount(obj.GetBulletBounceCount() + 1);		
 		if (obj.GetBulletBounceCount() > maxBounces_) obj.Kill();
 	}
-
-	return false;
 }

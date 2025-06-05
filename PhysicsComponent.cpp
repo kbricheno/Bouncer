@@ -3,7 +3,7 @@
 
 void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
 
-	//perform specific behaviour depending on assigned type
+	//perform specific behaviour depending on type of entity
 	switch (obj.GetType())
 	{
 	case GameObject::EntityType::CHARACTER:

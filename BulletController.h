@@ -7,7 +7,7 @@ public:
 	BulletController() {}
 	~BulletController() {}
 
-	bool HandleInput(GameObject& obj, float const deltaTime);
+	void Update(GameObject& obj, float const deltaTime);
 	
 private:
 	int maxBounces_ = 2;

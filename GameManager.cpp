@@ -1,32 +1,27 @@
 #include "GameManager.h"
 #include <iostream>
 
-bool GameManager::instantiated_ = false; // define the static bool
+#pragma region Game Set-Up
 
+//Define the static bool that allows only one instance of GameManager to exist
+bool GameManager::instantiated_ = false;
+
+//Construct the GameManager instance, ensuring only one instance can be created
 GameManager::GameManager() {
-    // allow only 1 instance of GameManager to exist
     assert(!instantiated_);
     instantiated_ = true;
 }
 
+//Obtain a pointer to the RenderWindow created in the main loop
 void GameManager::SetupWindow(sf::RenderWindow* const window) {
     window_ = window;
 }
 
+//Prepare everything needed to create Level instances (import data from external files)
 void GameManager::PrepareLevelGeneration(std::ifstream& const levelsFile) {
     
-	//create level plan of characters from external file
-	std::vector<char> levelPlan;
-    char levelChar;
-
-    if (levelsFile.is_open()) {
-        while (levelsFile.good()) {
-            levelChar = levelsFile.get();
-            std::cout << levelChar << "\n";
-            levelPlan.push_back(levelChar);
-        }
-    }
-    allLevelPlans_.push_back(levelPlan);
+	//generate the level plans
+	if (!GenerateLevelPlan(levelsFile)) std::cout << "ERROR: Could not find the level file path, or file is blank!\n";
 
 	//generate all textures
 	if (!GenerateTextures()) std::cout << "ERROR: Could not find all texture file paths!\n";
@@ -35,9 +30,35 @@ void GameManager::PrepareLevelGeneration(std::ifstream& const levelsFile) {
 	if (!GenerateSoundEffects()) std::cout << "ERROR: Could not find all sound effect file paths!\n";
 }
 
+#pragma endregion
+
 #pragma region File Loading
 
-//create all Textures, store them in a giant ugly map of maps of vectors (stored here so we only create/store 1 set of each Texture for the entire game)
+//Create every plan needed for Level instances to generate entities (one plan per level)
+bool GameManager::GenerateLevelPlan(std::ifstream& const levelsFile) {
+	
+	//each level will spawn entities based on a level plan (a vector of chars)
+	std::vector<char> levelPlan;
+	char levelChar;
+
+	//read the external file
+	if (levelsFile.is_open()) {
+		while (levelsFile.good()) {
+			//obtain each char and add it to the current level plan vector
+			levelChar = levelsFile.get();
+			std::cout << levelChar << "\n";
+			levelPlan.push_back(levelChar);
+
+			//TODO: add an identifier to separate level plans (e.g. a specific char indicates end of level plan)
+		}
+	}
+	allLevelPlans_.push_back(levelPlan);
+
+	if (allLevelPlans_.size() == 0) return false; //couldn't find the level file or it was empty
+	else return true; //level plans successfully generated
+}
+
+//Create every Texture needed for the entire game, store them in a giant ugly map of maps of vectors
 bool GameManager::GenerateTextures() {
 
 	//create maps to hold each entity's name and all of its animations
@@ -235,7 +256,7 @@ bool GameManager::GenerateTextures() {
 	return true;
 }
 
-//create and store all SoundBuffers, (stored here so we only create/store 1 set of each SoundBuffer for the entire game)
+//Create and store every SoundBuffer needed for the entire game
 bool GameManager::GenerateSoundEffects() {
 
 	//create maps to hold each entity's name and all of its sound buffers
@@ -305,37 +326,154 @@ bool GameManager::GenerateSoundEffects() {
 
 #pragma endregion
 
-#pragma region Game Loop
+#pragma region Input Management
 
-void GameManager::HandleInput(float const deltaTime) {
-    
-	//if a level currently exists, pass along the instruction to handle input
-	if (currentLevel_.size() > 0) 
+//Handle all events from the queue -- closing window, singular key presses, mouse clicks
+void GameManager::HandleEventQueue() {
+
+	//handle input from the event queue
+	while (const std::optional event = window_->pollEvent())
 	{
-        currentLevel_[0].HandleInput(deltaTime);
-    }
+		//closing window
+		if (event->is<sf::Event::Closed>())
+		{
+			window_->close();
+		}
+
+		//key press events
+		else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+		{
+			//menu key press events
+			//pausing game (quits game atm)
+			if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
+			{
+				window_->close();
+			}
+
+
+			//in-game key press events (commands sent to character)
+			//only parse these commands if a Level instance currently exists
+			if (currentLevel_.size() > 0)
+			{
+				//reload weapon
+				if (keyPressed->scancode == sf::Keyboard::Scancode::R)
+				{
+					currentLevel_[0].CommandReload();
+				}
+			}
+		}
+
+		//mouse click events
+		else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>())
+		{
+			if (mouseButtonPressed->button == sf::Mouse::Button::Left)
+			{
+				//menu mouse clicks
+				//left clicking on menu buttons
+
+				
+				//in-game mouse clicks (commands sent to character)
+				//only parse these commands if a Level instance currently exists
+				if (currentLevel_.size() > 0)
+				{
+					//shoot weapon
+					currentLevel_[0].CommandShoot();
+				}
+			}
+		}
+	}
 }
 
+//Handle all movement input, which consists of the WASD keys held down or released
+void GameManager::HandleMovementInput() {
+
+	//if no Level instance currently exists, ignore movement input
+	if (currentLevel_.size() <= 0) return;
+
+	/*
+	I avoided using Event::KeyPressed for movement input because key-held-down events are generated with a significant delay (the
+	same delay as holding a key down in a word processor). I actually switched Event key repeat off completely so it can be used 
+	for singular key presses exclusively -- I don't want users to be able to, e.g., hold down Esc to pause/unpause constantly.
+	*/
+
+	//upwards movement
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
+	{
+		currentLevel_[0].CommandMoveUp(true);
+	}
+	else
+	{
+		currentLevel_[0].CommandMoveUp(false);
+	}
+	
+	//leftwards movement
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+	{
+		currentLevel_[0].CommandMoveLeft(true);
+	}
+	else
+	{
+		currentLevel_[0].CommandMoveLeft(false);
+	}
+
+	//downward movement
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
+	{
+		currentLevel_[0].CommandMoveDown(true);
+	}
+	else
+	{
+		currentLevel_[0].CommandMoveDown(false);
+	}
+
+	//rightward movement
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+	{
+		currentLevel_[0].CommandMoveRight(true);
+	}
+	else
+	{
+		currentLevel_[0].CommandMoveRight(false);
+	}
+}
+
+#pragma endregion
+
+#pragma region Game Loop
+
+//Handle all user input and send off commands to the Level instance
+void GameManager::HandleInput(float const deltaTime) {
+    
+	HandleEventQueue();
+	HandleMovementInput();
+}
+
+//Create a new Level instance if the previous level has been cleared, otherwise tell the Level instance to update its entities
 void GameManager::Update(float const deltaTime) {    
    
 	//if the level has been cleared, generate a new level
-	if (levelCleared_) {
-        // if a level already exists, the next level's id will be the current one + 1, otherwise we're about to create level 0
+	if (levelCleared_) 
+	{
+        //if a level already exists, the next level's id will be the current one + 1, otherwise we're about to create level 0
         int nextLevelId = currentLevel_.size() > 0 ? currentLevel_[0].GetLevelId() + 1 : 0;
         
+		//create a Level instance and pass it everything it needs to generate and maintain every entity within the level
         Level nextLevel(window_, nextLevelId, tileSize_, 10, 10, allLevelPlans_[nextLevelId], allAnimations_, allSoundEffects_);
-        currentLevel_.push_back(nextLevel);
+        
+		//store the Level instance
+		currentLevel_.push_back(nextLevel);
         
         levelCleared_ = false;
     }
 
-	//if a level currently exists, pass along the instruction to update
+	//if the level has not been cleared, pass along the instruction to update
     else 
 	{
         currentLevel_[0].Update(deltaTime);
     }
 }
 
+//If a Level instance exists, tell it to draw its entities
 void GameManager::Draw(float const deltaTime) {
 
 	//if a level currently exists, pass along the instruction to draw

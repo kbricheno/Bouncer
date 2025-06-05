@@ -30,17 +30,26 @@ public:
 	}
 	~Level() {}
 
-	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
+	int GetLevelId() const { return levelId_; }
 
+	//level control (spawning and deleting objects)
+	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
 	void SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir);
-	void CleanUpDeadObjects();
+	void CleanUpDeadEntities();
 
 	//game loop
 	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
 	void Draw(float const deltaTime);
 
-	int GetLevelId() const { return levelId_; }
+	//user input commands
+	void CommandMoveLeft(bool moving) { characterControllers_.at(characterId).SetMoveLeft(moving); }
+	void CommandMoveRight(bool moving) { characterControllers_.at(characterId).SetMoveRight(moving); }
+	void CommandMoveUp(bool moving) { characterControllers_.at(characterId).SetMoveUp(moving); }
+	void CommandMoveDown(bool moving) { characterControllers_.at(characterId).SetMoveDown(moving); }
+	void CommandShoot();
+	void CommandReload();
+
 
 private:
 	int levelId_ = 0;
@@ -51,6 +60,9 @@ private:
 	//used to generate IDs for GameObjects and Components to identify each other
 	//can't use the size of the GameObject vector because indexes get messed up as objects are destroyed
 	int currentObjectId = 0;
+
+	//keep a specific record of the player character's id so GameManager can pass user input commands to it easily
+	int characterId = 0;
 
 	std::map<int, GameObject> gameObjects_;
 	std::map<int, CharacterController> characterControllers_;

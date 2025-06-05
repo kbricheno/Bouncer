@@ -1,94 +1,31 @@
 #include <iostream>
 #include "CharacterController.h"
 
-bool CharacterController::HandleInput(GameObject &obj, float const deltaTime) {
-    //handle events and key presses
-    bool spawnBullet = ReceiveInput(obj);
+void CharacterController::Update(GameObject &obj, float const deltaTime) {
+    //perform specific behaviour depending on type of entity
+    switch (obj.GetType())
+    {
+    case GameObject::EntityType::CHARACTER:
+        obj.SetDirection(CalculateCharacterDirection(obj));
+        obj.SetRotation(CalculateCharacterRotation(obj));
+        break;
+
+    case GameObject::EntityType::ENEMY:
+        break;
+
+    case GameObject::EntityType::BULLET:
+        break;
+
+    default:
+        break;
+    }
     timeSinceLastShot += deltaTime;
-
-    //update the GameObject's direction_ variable based on the handled input (keys pressed)
-    obj.SetDirection(CalculateDirection(obj));
-    //update the GameObject's rotation_ variable based on the handled input (mouse position, obj position)
-    obj.SetRotation(CalculateRotation(obj));
-
-    return spawnBullet;
 }
 
-bool CharacterController::ReceiveInput(GameObject &obj) {
-    bool spawnBullet = false;
-    // handle input from the event queue
-    while (const std::optional event = window_->pollEvent())
-    {
-        // closing window
-        if (event->is<sf::Event::Closed>())
-        {
-            window_->close();
-        }
-        //key press events
-        else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
-        {
-            // quit game through escape for now
-            if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
-            {
-                window_->close();
-            }            
-            //reloading
-            if (keyPressed->scancode == sf::Keyboard::Scancode::R)
-            {
-                ReloadCommand(obj);
-            }
-        }
-        else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>())
-        {
-            if (mouseButtonPressed->button == sf::Mouse::Button::Left)
-            {
-                spawnBullet = ShootCommand(obj);
-            }
-        }
-    }
+#pragma region Character-Specific Behaviour
 
-    //avoid using Event::KeyPressed for movement because when a key is held, its events are generated with a significant delay
-    //^ I actually switched Event key repeat off completely so it can be used for single key presses exclusively
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
-    {
-        moveUp_ = true;
-    }
-    else
-    {
-        moveUp_ = false;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
-    {
-        moveLeft_ = true;
-    }
-    else
-    {
-        moveLeft_ = false;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
-    {
-        moveDown_ = true;
-    }
-    else
-    {
-        moveDown_ = false;
-    }
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
-    {
-        moveRight_ = true;
-    }
-    else
-    {
-        moveRight_ = false;
-    }
-
-    return spawnBullet;
-}
-
-sf::Vector2f CharacterController::CalculateDirection(GameObject &obj) {
+//Update the character GameObject's direction_ variable based on any input received earlier (keys pressed)
+sf::Vector2f CharacterController::CalculateCharacterDirection(GameObject &obj) {
     //start by setting the direction values to zero
     float newDirX = 0, newDirY = 0;
     
@@ -121,7 +58,8 @@ sf::Vector2f CharacterController::CalculateDirection(GameObject &obj) {
     return { newDirX, newDirY };
 }
 
-sf::Angle CharacterController::CalculateRotation(GameObject &obj) {
+//Update the character GameObject's rotation_ variable based on the mouse position and GameObject position
+sf::Angle CharacterController::CalculateCharacterRotation(GameObject &obj) {
     //get the mouse position in the window (in screen space)
     sf::Vector2i mousePos = sf::Mouse::getPosition(*window_);
 
@@ -138,7 +76,8 @@ sf::Angle CharacterController::CalculateRotation(GameObject &obj) {
     return characterAngle;
 }
 
-bool CharacterController::ShootCommand(GameObject &obj) {
+//Command called from the Level instance -- check if the character is able to shoot
+bool CharacterController::ValidateShootCommand(GameObject &obj) {
     //prevent bullet spam
     if (timeSinceLastShot < timeBetweenShots) return false;
 
@@ -148,8 +87,20 @@ bool CharacterController::ShootCommand(GameObject &obj) {
     //prevent shooting while reloading
     if (obj.GetCurrentAnimation() == "reload") return false;
 
+
+    //passed conditions: can shoot 
+    //perform character shoot behaviour (sound and animation)
+    Shoot(obj);
+
+    //inform Level it's okay to spawn a bullet
+    return true;
+}
+
+//Make the character shoot
+void CharacterController::Shoot(GameObject &obj) {
+    
     //change animation
-    if (obj.GetCurrentAnimation() != "shoot") 
+    if (obj.GetCurrentAnimation() != "shoot")
     {
         obj.AddAnimationToStack("shoot");
     }
@@ -160,14 +111,12 @@ bool CharacterController::ShootCommand(GameObject &obj) {
     //shoot
     timeSinceLastShot = 0;
     characterCurrentBullets--;
-
-    //tell Level to spawn a bullet using obj direction & obj position -- how to do this without creating a circular dependency?
-    return true;
 }
 
-void CharacterController::ReloadCommand(GameObject &obj) {
+//Command called from the Level instance -- make the character reload
+void CharacterController::Reload(GameObject &obj) {
 
-    //prevent reloading when character has full ammo
+    //ignore reload command when character has full ammo
     if (characterCurrentBullets == characterMaxBullets) return;
 
     //change animation
@@ -183,6 +132,16 @@ void CharacterController::ReloadCommand(GameObject &obj) {
     characterCurrentBullets = characterMaxBullets;
 }
 
-void CharacterController::ButtonClickCommand() {
+#pragma endregion
 
-}
+#pragma region Enemy-Specific Behaviour
+
+
+
+#pragma endregion
+
+#pragma region Bullet-Specific Behaviour
+
+
+
+#pragma endregion

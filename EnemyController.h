@@ -10,8 +10,9 @@ public:
 	}
 	~EnemyController() {}
 
-	bool HandleInput(GameObject& obj, float const deltaTime);
+	void Update(GameObject& obj, float const deltaTime);
 
+	void Die(GameObject &obj);
 	sf::Vector2f ChangeDirection();
 
 private:

@@ -13,8 +13,12 @@ public:
 	void SetupWindow(sf::RenderWindow* const window);
 
 	void PrepareLevelGeneration(std::ifstream& const levelsFile);
+	bool GenerateLevelPlan(std::ifstream& const levelsFile);
 	bool GenerateTextures();
 	bool GenerateSoundEffects();
+
+	void HandleEventQueue();
+	void HandleMovementInput();
 
 	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);

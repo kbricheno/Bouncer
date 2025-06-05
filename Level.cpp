@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-//create all of this level's GameObjects and Components
+#pragma region Level Control
+
+//Create every GameObject and Component the level starts with
 void Level::GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan) {
 
 	/*
@@ -158,8 +160,12 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 			physicsComponents_.insert({ currentObjectId, pComp });
 			audioComponents_.insert({ currentObjectId, aComp });
 
+			//record the character's id so user input can be passed to it easily
+			characterId = currentObjectId;
+
 			//increase the id
 			currentObjectId++;
+
 
 			//there's only ever one character, so don't bother finishing the loop
 			break;
@@ -174,8 +180,9 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 	}
 }
 
+//Create a new bullet
 void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir) {
-	
+
 	//create GameObject
 	GameObject bulletObj(GameObject::EntityType::BULLET, startPos, (sf::Vector2f)allAnimations_.at("bullet").at("idle")[0].getSize(), startDir);
 
@@ -196,7 +203,8 @@ void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir
 	currentObjectId++;
 }
 
-void Level::CleanUpDeadObjects() 
+//Remove "dead" GameObjects and their Components from storage maps
+void Level::CleanUpDeadEntities() 
 {
 	//remove dead objects
 	std::vector<int> indexesToBeDeleted;
@@ -247,39 +255,52 @@ void Level::CleanUpDeadObjects()
 	}
 }
 
-#pragma region Gameplay Loop
+#pragma endregion
 
-void Level::HandleInput(float const deltaTime) {
+#pragma region User Input Commands
+
+//Ask the character if it's okay to shoot
+void Level::CommandShoot() {
 	
-	//update character
-	for (auto& [id, cComp] : characterControllers_)
+	//check that the character is able to shoot, then spawn a bullet
+	if (characterControllers_.at(characterId).ValidateShootCommand(gameObjects_.at(characterId))) 
 	{
-		if (cComp.HandleInput(gameObjects_.at(id), deltaTime)) //this is really bad, need to think of a better way to spawn bullets
-		{
-			sf::Angle startAngle = gameObjects_.at(id).GetRotation();
-			sf::Vector2f startDir = { cos(startAngle.asRadians()), sin(startAngle.asRadians()) };
+		sf::Angle startAngle = gameObjects_.at(characterId).GetRotation();
+		sf::Vector2f startDir = { cos(startAngle.asRadians()), sin(startAngle.asRadians()) };
 
-			SpawnBullet(gameObjects_.at(id).GetCenter(), startDir);
-		}
-	}
-
-	//update enemies
-	for (auto& [id, cComp] : enemyControllers_)
-	{
-		cComp.HandleInput(gameObjects_.at(id), deltaTime);
-	}
-
-	//update bullets
-	for (auto& [id, cComp] : bulletControllers_)
-	{	
-		cComp.HandleInput(gameObjects_.at(id), deltaTime);
+		SpawnBullet(gameObjects_.at(characterId).GetCenter(), startDir);
 	}
 }
 
+//Ask the character to reload their weapon
+void Level::CommandReload() {
+	characterControllers_.at(characterId).Reload(gameObjects_.at(characterId));
+}
 
+#pragma endregion
+
+#pragma region Gameplay Loop
+
+//Update every behaviour-altering Component in the level
 void Level::Update(float const deltaTime) {
 
-	CleanUpDeadObjects();
+	//remove "dead" entities before updating anything
+	CleanUpDeadEntities();
+
+	//update character's ControllerComponent
+	characterControllers_.at(characterId).Update(gameObjects_.at(characterId), deltaTime);
+
+	//update every enemy's ControllerComponent
+	for (auto& [id, cComp] : enemyControllers_)
+	{
+		cComp.Update(gameObjects_.at(id), deltaTime);
+	}
+
+	//update every bullet's ControllerComponent
+	for (auto& [id, cComp] : bulletControllers_)
+	{
+		cComp.Update(gameObjects_.at(id), deltaTime);
+	}
 
 	//update all the PhysicsComponents
 	for (auto& [id, pComp] : physicsComponents_)
@@ -294,9 +315,10 @@ void Level::Update(float const deltaTime) {
 	}
 }
 
+//Draw every Sprite in the level
 void Level::Draw(float const deltaTime) {
 
-	//draw every VisualComponent's sprite
+	//update every VisualComponent
 	for (auto& [id, vComp] : visualComponents_)
 	{
 		vComp.Update(gameObjects_.at(id), deltaTime);

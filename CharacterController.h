@@ -23,14 +23,18 @@ public:
 	}
 	~CharacterController() {}
 
-	bool HandleInput(GameObject &obj, float const deltaTime);
+	void Update(GameObject &obj, float const deltaTime);
 	
-	bool ReceiveInput(GameObject &obj);
-	sf::Vector2f CalculateDirection(GameObject& obj);
-	sf::Angle CalculateRotation(GameObject& obj);
-	bool ShootCommand(GameObject& obj);
-	void ReloadCommand(GameObject& obj);
-	void ButtonClickCommand();
+	void SetMoveLeft(bool moving) { moveLeft_ = moving; }
+	void SetMoveRight(bool moving) { moveRight_ = moving; }
+	void SetMoveUp(bool moving) { moveUp_ = moving; }
+	void SetMoveDown(bool moving) { moveDown_ = moving; }
+	
+	sf::Vector2f CalculateCharacterDirection(GameObject& obj);
+	sf::Angle CalculateCharacterRotation(GameObject& obj);
+	bool ValidateShootCommand(GameObject& obj);
+	void Shoot(GameObject& obj);
+	void Reload(GameObject& obj);
 
 private:
 	sf::RenderWindow* window_;
