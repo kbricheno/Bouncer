@@ -1,5 +1,4 @@
 #include "VisualComponent.h"
-#include <iostream>
 
 void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	

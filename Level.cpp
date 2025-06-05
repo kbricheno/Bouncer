@@ -1,7 +1,5 @@
 #include "Level.h"
 
-#include <iostream>
-
 #pragma region Level Control
 
 //Create every GameObject and Component the level starts with
@@ -108,14 +106,14 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 
 			//create VisualComponent, PhysicsComponent, AudioComponent
 			//create an enemy-specific ControllerComponent, passing in the currentObjectId used in srand to determine directions the enemy will move in
-			EnemyController cComp(currentObjectId);
+			ControllerComponent cComp(currentObjectId);
 			VisualComponent vComp(window_, allAnimations_.at("enemy"));
 			PhysicsComponent pComp(enemyObj.GetType(), 250.f);
 			AudioComponent aComp(allSoundEffects_.at("enemy"));
 
 			//store everything
 			gameObjects_.insert({ currentObjectId, enemyObj });
-			enemyControllers_.insert({ currentObjectId, cComp });
+			controllerComponents_.insert({ currentObjectId, cComp });
 			visualComponents_.insert({ currentObjectId, vComp });
 			physicsComponents_.insert({ currentObjectId, pComp });
 			audioComponents_.insert({ currentObjectId, aComp });
@@ -148,14 +146,14 @@ void Level::GenerateLevel(const int tileSize, const int levelWidth, const int le
 			GameObject characterObj(GameObject::EntityType::CHARACTER, position, (sf::Vector2f)allAnimations_.at("character").at("idle")[0].getSize());
 
 			//create Components
-			CharacterController cComp(window_);
+			ControllerComponent cComp;
 			VisualComponent vComp(window_, allAnimations_.at("character"));
 			PhysicsComponent pComp(characterObj.GetType(), 500.f);
 			AudioComponent aComp(allSoundEffects_.at("character"));
 
 			//store everything
 			gameObjects_.insert({ currentObjectId, characterObj });
-			characterControllers_.insert({ currentObjectId, cComp });
+			controllerComponents_.insert({ currentObjectId, cComp });
 			visualComponents_.insert({ currentObjectId, vComp });
 			physicsComponents_.insert({ currentObjectId, pComp });
 			audioComponents_.insert({ currentObjectId, aComp });
@@ -187,14 +185,14 @@ void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir
 	GameObject bulletObj(GameObject::EntityType::BULLET, startPos, (sf::Vector2f)allAnimations_.at("bullet").at("idle")[0].getSize(), startDir);
 
 	//create Components
-	BulletController cComp;
+	ControllerComponent cComp;
 	VisualComponent vComp(window_, allAnimations_.at("bullet"));
 	PhysicsComponent pComp(bulletObj.GetType(), 1000.f);
 	AudioComponent aComp(allSoundEffects_.at("bullet"));
 
 	//store everything
 	gameObjects_.insert({ currentObjectId, bulletObj });
-	bulletControllers_.insert({ currentObjectId, cComp });
+	controllerComponents_.insert({ currentObjectId, cComp });
 	visualComponents_.insert({ currentObjectId, vComp });
 	physicsComponents_.insert({ currentObjectId, pComp });
 	audioComponents_.insert({ currentObjectId, aComp });
@@ -216,19 +214,9 @@ void Level::CleanUpDeadEntities()
 			indexesToBeDeleted.push_back(id);
 
 			//loop through each Component, identify any Components belonging to the dead GameObject using their id and remove them from their maps
-			if (characterControllers_.find(id) != characterControllers_.end()) 
+			if (controllerComponents_.find(id) != controllerComponents_.end())
 			{
-				characterControllers_.erase(id);
-			}
-
-			if (bulletControllers_.find(id) != bulletControllers_.end())
-			{
-				bulletControllers_.erase(id);
-			}
-
-			if (enemyControllers_.find(id) != enemyControllers_.end())
-			{
-				enemyControllers_.erase(id);
+				controllerComponents_.erase(id);
 			}
 
 			if (physicsComponents_.find(id) != physicsComponents_.end())
@@ -263,7 +251,7 @@ void Level::CleanUpDeadEntities()
 void Level::CommandShoot() {
 	
 	//check that the character is able to shoot, then spawn a bullet
-	if (characterControllers_.at(characterId).ValidateShootCommand(gameObjects_.at(characterId))) 
+	if (controllerComponents_.at(characterId).ValidateShootCommand(gameObjects_.at(characterId)))
 	{
 		sf::Angle startAngle = gameObjects_.at(characterId).GetRotation();
 		sf::Vector2f startDir = { cos(startAngle.asRadians()), sin(startAngle.asRadians()) };
@@ -274,7 +262,7 @@ void Level::CommandShoot() {
 
 //Ask the character to reload their weapon
 void Level::CommandReload() {
-	characterControllers_.at(characterId).Reload(gameObjects_.at(characterId));
+	controllerComponents_.at(characterId).Reload(gameObjects_.at(characterId));
 }
 
 #pragma endregion
@@ -287,36 +275,35 @@ void Level::Update(float const deltaTime) {
 	//remove "dead" entities before updating anything
 	CleanUpDeadEntities();
 
-	//update character's ControllerComponent
-	characterControllers_.at(characterId).Update(gameObjects_.at(characterId), deltaTime);
 
-	//update every enemy's ControllerComponent
-	for (auto& [id, cComp] : enemyControllers_)
+	//update every ControllerComponent
+
+	//get the mouse position in the window (in screen space)
+	sf::Vector2i mousePos = sf::Mouse::getPosition(*window_);
+
+	for (auto& [id, cComp] : controllerComponents_)
 	{
-		cComp.Update(gameObjects_.at(id), deltaTime);
+		//special treatment: only the character needs the mouse position to update its rotation, but may as well pass it to everyone
+		cComp.Update(gameObjects_.at(id), deltaTime, mousePos);
 	}
 
-	//update every bullet's ControllerComponent
-	for (auto& [id, cComp] : bulletControllers_)
-	{
-		cComp.Update(gameObjects_.at(id), deltaTime);
-	}
 
 	//update all the PhysicsComponents
 	for (auto& [id, pComp] : physicsComponents_)
 	{
 		pComp.Update(gameObjects_.at(id), deltaTime, physicsComponents_);
 	}
+}
+
+//Play sounds and draw every Sprite in the level
+void Level::Draw(float const deltaTime) {
 
 	//update all the AudioComponents
 	for (auto& [id, aComp] : audioComponents_)
 	{
 		aComp.Update(gameObjects_.at(id));
 	}
-}
 
-//Draw every Sprite in the level
-void Level::Draw(float const deltaTime) {
 
 	//update every VisualComponent
 	for (auto& [id, vComp] : visualComponents_)

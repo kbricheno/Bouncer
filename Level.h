@@ -5,9 +5,7 @@
 #include <map>
 
 #include "GameObject.h"
-#include "CharacterController.h"
-#include "BulletController.h"
-#include "EnemyController.h"
+#include "ControllerComponent.h"
 #include "PhysicsComponent.h"
 #include "VisualComponent.h"
 #include "AudioComponent.h"
@@ -38,15 +36,14 @@ public:
 	void CleanUpDeadEntities();
 
 	//game loop
-	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
 	void Draw(float const deltaTime);
 
 	//user input commands
-	void CommandMoveLeft(bool moving) { characterControllers_.at(characterId).SetMoveLeft(moving); }
-	void CommandMoveRight(bool moving) { characterControllers_.at(characterId).SetMoveRight(moving); }
-	void CommandMoveUp(bool moving) { characterControllers_.at(characterId).SetMoveUp(moving); }
-	void CommandMoveDown(bool moving) { characterControllers_.at(characterId).SetMoveDown(moving); }
+	void CommandMoveLeft(bool moving) { controllerComponents_.at(characterId).SetMoveLeft(moving); }
+	void CommandMoveRight(bool moving) { controllerComponents_.at(characterId).SetMoveRight(moving); }
+	void CommandMoveUp(bool moving) { controllerComponents_.at(characterId).SetMoveUp(moving); }
+	void CommandMoveDown(bool moving) { controllerComponents_.at(characterId).SetMoveDown(moving); }
 	void CommandShoot();
 	void CommandReload();
 
@@ -65,9 +62,7 @@ private:
 	int characterId = 0;
 
 	std::map<int, GameObject> gameObjects_;
-	std::map<int, CharacterController> characterControllers_;
-	std::map<int, BulletController> bulletControllers_;
-	std::map<int, EnemyController> enemyControllers_;
+	std::map<int, ControllerComponent> controllerComponents_;
 	std::map<int, PhysicsComponent> physicsComponents_;
 	std::map<int, VisualComponent> visualComponents_;
 	std::map<int, AudioComponent> audioComponents_;

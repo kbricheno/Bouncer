@@ -141,9 +141,7 @@
   <ItemGroup>
     <ClCompile Include="AudioComponent.cpp" />
     <ClCompile Include="Bouncer.cpp" />
-    <ClCompile Include="BulletController.cpp" />
-    <ClCompile Include="CharacterController.cpp" />
-    <ClCompile Include="EnemyController.cpp" />
+    <ClCompile Include="ControllerComponent.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="PhysicsComponent.cpp" />
     <ClCompile Include="GameManager.cpp" />
@@ -152,13 +150,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioComponent.h" />
-    <ClInclude Include="BulletController.h" />
-    <ClInclude Include="CharacterController.h" />
-    <ClInclude Include="EnemyController.h" />
+    <ClInclude Include="ControllerComponent.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Level.h" />
     <ClInclude Include="PhysicsComponent.h" />
-    <ClInclude Include="ControllerComponent.h" />
     <ClInclude Include="GameManager.h" />
     <ClInclude Include="VisualComponent.h" />
   </ItemGroup>

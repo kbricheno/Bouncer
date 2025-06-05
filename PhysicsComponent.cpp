@@ -1,5 +1,4 @@
 #include "PhysicsComponent.h"
-#include <iostream>
 
 void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
 

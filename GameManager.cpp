@@ -15,6 +15,7 @@ GameManager::GameManager() {
 //Obtain a pointer to the RenderWindow created in the main loop
 void GameManager::SetupWindow(sf::RenderWindow* const window) {
     window_ = window;
+	window_->setKeyRepeatEnabled(false);
 }
 
 //Prepare everything needed to create Level instances (import data from external files)

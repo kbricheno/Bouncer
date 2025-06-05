@@ -2,6 +2,7 @@
 
 void AudioComponent::Update(GameObject &obj) {
 	
+	//check if there's a sound to be played this frame
 	if (obj.CheckSoundEvent() != GameObject::SoundEvent::NONE) 
 	{
 		GameObject::SoundEvent event = obj.CheckSoundEvent();
@@ -18,6 +19,7 @@ void AudioComponent::Update(GameObject &obj) {
 			break;
 
 		case GameObject::SoundEvent::BULLET_COLLISION:
+			//this is the only sound event that could have come from more than one type of entity, so check which entity this AudioComponent belongs to
 			switch (obj.GetType())
 			{
 			case GameObject::EntityType::ENEMY:
