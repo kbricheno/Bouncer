@@ -2,14 +2,6 @@
 
 void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	
-	//on the first update call, set up elements that couldn't be set up in the constructor
-	if (setup) 
-	{
-		obj.AddAnimationToStack(startAnim_, 0); //add & loop the starting animation
-		sprites_[0].setOrigin(sprites_[0].getLocalBounds().size / 2.f); //set the sprite's origin to its center
-		setup = false;
-	}
-
 	//if a new animation has been set, play it from frame 0
 	if (obj.GetCurrentAnimation() != previousAnimation_) 
 	{
@@ -52,5 +44,5 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	sprites_[0].setPosition(obj.GetCenter());
 	sprites_[0].setRotation(obj.GetRotation());
 
-	window_->draw(sprites_[0]);
+	window_.draw(sprites_[0]);
 }

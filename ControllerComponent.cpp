@@ -1,6 +1,6 @@
 #include "ControllerComponent.h"
 
-void ControllerComponent::Update(GameObject &obj, float const deltaTime, sf::Vector2i mousePos) {
+void ControllerComponent::Update(GameObject &obj, float const deltaTime, sf::Vector2f mousePos) {
     //perform specific behaviour depending on type of entity
     switch (obj.GetType())
     {
@@ -8,7 +8,7 @@ void ControllerComponent::Update(GameObject &obj, float const deltaTime, sf::Vec
         obj.SetDirection(CalculateCharacterDirection(obj));
         obj.SetRotation(CalculateCharacterRotation(obj, mousePos));
         CalculateCharacterAnimation(obj);
-        timeSinceLastShot += deltaTime;
+        timeSinceLastShot_ += deltaTime;
         break;
 
     case GameObject::EntityType::ENEMY:
@@ -56,7 +56,7 @@ sf::Vector2f ControllerComponent::CalculateCharacterDirection(GameObject &obj) {
 }
 
 //Update the character GameObject's rotation_ variable based on the mouse position and GameObject position
-sf::Angle ControllerComponent::CalculateCharacterRotation(GameObject &obj, sf::Vector2i mousePos) {
+sf::Angle ControllerComponent::CalculateCharacterRotation(GameObject &obj, sf::Vector2f mousePos) {
 
     //calculate the vector between the player and mouse
     sf::Vector2f relativePos = { mousePos.x - obj.GetCenter().x, mousePos.y - (obj.GetCenter().y)};
@@ -118,46 +118,59 @@ void ControllerComponent::Shoot(GameObject& obj) {
     obj.NotifySoundEvent(GameObject::SoundEvent::CHARACTER_SHOOT);
 
     //shoot
-    timeSinceLastShot = 0;
-    characterCurrentBullets--;
+    timeSinceLastShot_ = 0;
+    characterCurrentAmmo_--;
 }
 
+//Make the character reload
+void ControllerComponent::Reload(GameObject& obj) {
 
-//Commands called by user input ---------------------------------------------------------------------------------------------------------------------------------------------------
-
-//Command called from the Level instance -- check if the character is able to shoot
-bool ControllerComponent::ValidateShootCommand(GameObject &obj) {
-    //prevent bullet spam
-    if (timeSinceLastShot < timeBetweenShots) return false;
-
-    //prevent shooting when out of bullets (add UI message here)
-    if (characterCurrentBullets <= 0) return false;
-
-    //prevent shooting while reloading
-    if (obj.GetCurrentAnimation() == "reload") return false;
-
-
-    //passed conditions: can shoot 
-    //perform character shoot behaviour (sound and animation)
-    Shoot(obj);
-
-    //inform Level it's okay to spawn a bullet
-    return true;
-}
-
-//Command called from the Level instance -- make the character reload
-void ControllerComponent::Reload(GameObject &obj) {
-
-    //ignore reload command when character has full ammo
-    if (characterCurrentBullets == characterMaxBullets) return;
-
+    //switch aniation
     CalculateCharacterAnimation(obj, "reload");
 
     //play a sound
     obj.NotifySoundEvent(GameObject::SoundEvent::CHARACTER_RELOAD);
 
     //reload
-    characterCurrentBullets = characterMaxBullets;
+    characterCurrentAmmo_ = characterMaxAmmo_;
+}
+
+
+//Commands called by user input ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+//Command called from the Level instance -- check if the character is able to shoot
+int ControllerComponent::ValidateShootCommand(GameObject &obj) {
+    //prevent bullet spam
+    if (timeSinceLastShot_ < timeBetweenShots_) return characterCurrentAmmo_;
+
+    //prevent shooting when out of bullets (add UI message here)
+    if (characterCurrentAmmo_ <= 0) return characterCurrentAmmo_;
+
+    //prevent shooting while reloading
+    if (obj.GetCurrentAnimation() == "reload") return characterCurrentAmmo_;
+
+
+    //passed conditions: can shoot 
+    //perform character shoot behaviour (sound and animation)
+    Shoot(obj);
+
+    //return the character's new ammo value
+    return characterCurrentAmmo_;
+}
+
+//Command called from the Level instance -- make the character reload
+int ControllerComponent::ValidateReloadCommand(GameObject &obj) {
+
+    //ignore reload command when character has full ammo
+    if (characterCurrentAmmo_ == characterMaxAmmo_) return characterCurrentAmmo_;
+
+
+    //passed condition: can reload
+    //perform character reload behaviour (sound and animation)
+    Reload(obj);
+
+    //return the character's new ammo value
+    return characterCurrentAmmo_;
 }
 
 #pragma endregion

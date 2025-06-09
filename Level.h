@@ -12,28 +12,35 @@
 
 class Level {
 public:
-	Level(sf::RenderWindow* const window,
-		const int levelId, const int tileSize,
-		const int levelWidth, const int levelHeight,
-		const std::vector<char> &levelPlan,
-		const std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> &allAnimations,
-		const std::map<std::string, std::map<std::string, sf::SoundBuffer>> &allSoundEffects)
+	Level(sf::RenderWindow& const window,
+		int const levelId, int const tileSize,
+		std::vector<char> const &levelPlan,
+		sf::Vector2i const levelSize,
+		std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> const &allAnimations,
+		std::map<std::string, std::map<std::string, sf::SoundBuffer>> const &allSoundEffects)
 		:
 		levelId_(levelId),
 		window_(window),
+		levelSizePixels_(tileSize * levelSize),
 		allAnimations_(allAnimations),
 		allSoundEffects_(allSoundEffects)
 	{
-		GenerateLevel(tileSize, levelWidth, levelHeight, levelPlan);
+		GenerateLevel(tileSize, levelPlan, levelSize);
 	}
 	~Level() {}
 
+	//game control (hud and progression variables)
 	int GetLevelId() const { return levelId_; }
+	int GetEnemyCount() const { return enemiesAlive_; }
+	bool CheckCharacterDetected() const { return characterAlive_; }
+	void UpdateHudAmmo(sf::Text&);
+	void UpdateHudEnemies(sf::Text&);
 
-	//level control (spawning and deleting objects)
-	void GenerateLevel(const int tileSize, const int levelWidth, const int levelHeight, const std::vector<char>& levelPlan);
+	//level control (spawning and deleting objects, camera updating)
+	void GenerateLevel(const int tileSize, const std::vector<char>& levelPlan, const sf::Vector2i levelSize);
 	void SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir);
 	void CleanUpDeadEntities();
+	void UpdateView();
 
 	//game loop
 	void Update(float const deltaTime);
@@ -50,8 +57,10 @@ public:
 
 private:
 	int levelId_ = 0;
+	sf::Vector2f levelSizePixels_;
 
-	sf::RenderWindow* window_ = nullptr;
+	sf::RenderWindow& const window_;
+	sf::View levelView;
 
 	//counter for the number of GameObjects created over the course of the Level's existence
 	//used to generate IDs for GameObjects and Components to identify each other
@@ -61,6 +70,13 @@ private:
 	//keep a specific record of the player character's id so GameManager can pass user input commands to it easily
 	int characterId = 0;
 
+	//variables for game control & hud
+	bool characterAlive_ = true;
+	int startEnemies_ = 0;
+	int enemiesAlive_ = 0;
+	int ammoCount_ = 0;
+
+	//maps used to store every GameObject and Component in the level
 	std::map<int, GameObject> gameObjects_;
 	std::map<int, ControllerComponent> controllerComponents_;
 	std::map<int, PhysicsComponent> physicsComponents_;

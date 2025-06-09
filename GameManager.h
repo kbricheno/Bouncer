@@ -7,47 +7,84 @@
 
 class GameManager {
 public:
-	GameManager();
+	enum class GameState {
+		TITLE,
+		MAIN_MENU,
+		HOW_TO_PLAY,
+		IN_LEVEL,
+		PAUSED,
+		DETECTED,
+		LEVEL_CLEARED
+	};
+
+	//Construct the GameManager instance, ensuring only one instance can be created
+	GameManager(sf::RenderWindow& const window, sf::Font& const font) : window_(window), font_(font)
+	{
+		assert(!instantiated_);
+		instantiated_ = true;
+	}
 	~GameManager() { instantiated_ = false; }
 
-	void SetupWindow(sf::RenderWindow* const window);
-
+	//game set-up
 	void PrepareLevelGeneration(std::ifstream& const levelsFile);
 	bool GenerateLevelPlan(std::ifstream& const levelsFile);
 	bool GenerateTextures();
 	bool GenerateSoundEffects();
+	void CreateLevel(int const levelId);
 
+	//menus & hud	
+	void ClearMenu();
+	void SetupTitle();
+	void SetupMainMenu();
+	void SetupHowToPlay();
+	void SetupPause();
+	void SetupLevelCleared();
+	void SetupDetected();
+	void SetupLevel();
+	void UpdateHud();
+	void DrawMenu();
+
+	//user input
 	void HandleEventQueue();
 	void HandleMovementInput();
 
+	//game loop
 	void HandleInput(float const deltaTime);
 	void Update(float const deltaTime);
 	void Draw(float const deltaTime);
 
-	// getters
-	sf::Vector2u const GetScreenDimensions() const { return sf::Vector2u(screenWidth_, screenHeight_); }
-
-	void TogglePause() { paused_ = !paused_; }
-	void ToggleLevelCleared() { levelCleared_ = !levelCleared_; }
-
 private:
 	static bool instantiated_;
 
-	sf::RenderWindow *window_ = nullptr;
-	int const screenWidth_ = /*960*/1920;
-	int const screenHeight_ = /*540*/1080;
+	GameState state_ = GameState::TITLE;
+
+	sf::RenderWindow& window_;
+	sf::Font& font_;
+
 	int const tileSize_ = 100;
 
-	bool running_ = true;
-	bool paused_ = false;
 
 	//level variables
 	std::vector<std::vector<char>> allLevelPlans_; //used in Level to determine which entity to spawn
+	std::vector<sf::Vector2i> allLevelSizes_; //used in Level to determine the dimension of the current level
 	std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> allAnimations_; //used in Level to pass animations to entities' VisualComponents
 	std::map<std::string, std::map<std::string, sf::SoundBuffer>> allSoundEffects_; //used in Level to pass sound effects to entities' AudioComponents
 
-	bool levelCleared_ = true;
 	std::vector<Level> currentLevel_; // only ever need 1 of these -- is there a way to avoid using a vector? can't define a "null" Level instance to be filled during construction
 
-	// camera state?
+
+	//hud & menu variables
+	sf::View hudView;
+
+	std::map<std::string, sf::Texture> menuImages_;
+	std::vector<sf::Sprite> activeImages_;
+	std::vector<float> activeButtons_;
+	std::vector<sf::Text> activeText_;
+
+	float startButton = 0.f;
+	float continueButton = 0.f;
+	float howToPlayButton = 0.f;
+	float quitButton = 0.f;
+
+	float volumeSlider = 0.f;
 };

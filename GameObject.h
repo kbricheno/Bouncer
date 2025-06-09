@@ -32,13 +32,16 @@ public:
 	GameObject(EntityType type,
 		sf::Vector2f const position,
 		sf::Vector2f const spriteSize = sf::Vector2f(),
+		std::string startAnim = "idle",
 		sf::Vector2f const direction = sf::Vector2f())
 		:
 		type_(type),
 		colliderPosition_(position),
 		direction_(direction)
 	{
+		//set up some starting values that are identical across all GameObjects
 		centerPosition_ = colliderPosition_ + spriteSize / 2.f;
+		AddAnimationToStack(startAnim, 0);
 	}
 	~GameObject() {}
 

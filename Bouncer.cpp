@@ -12,11 +12,9 @@ int main()
 {
     sf::Clock clock;
 
-    GameManager gm;
-
     sf::VideoMode vMode(sf::VideoMode::getDesktopMode().size);
-    //sf::VideoMode vMode(gm.GetScreenDimensions());
     sf::RenderWindow window(vMode, "Bouncer", sf::Style::Close);
+    window.setKeyRepeatEnabled(false);
 
     std::ifstream levelsFile("Assets/levels.txt");
 
@@ -24,7 +22,7 @@ int main()
     sf::Font f("Assets/UI/AGENCYR.ttf");
     sf::Text debugText(f);
 
-    gm.SetupWindow(&window);
+    GameManager gm(window, f);
     gm.PrepareLevelGeneration(levelsFile);
 
     while (window.isOpen()) 
@@ -42,7 +40,7 @@ int main()
         gm.Update(deltaTime.asSeconds());
 
         //draw
-        window.clear(sf::Color::Color(50,50,50));
+        window.clear(sf::Color::Color(0,0,0));
         gm.Draw(deltaTime.asSeconds());
         window.draw(debugText);
         window.display();

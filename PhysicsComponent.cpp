@@ -9,17 +9,25 @@ void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<i
 		Move(obj, deltaTime, allPhysicsComponents);
 		ResolveInteraction(obj, allPhysicsComponents);
 		break;
+
 	case GameObject::EntityType::ENEMY:
 		Move(obj, deltaTime, allPhysicsComponents);
 		ResolveInteraction(obj, allPhysicsComponents);
 		break;
+
+	case GameObject::EntityType::ENEMY_VISION:
+		ResolveInteraction(obj, allPhysicsComponents);
+		break;
+
 	case GameObject::EntityType::BULLET:
 		Move(obj, deltaTime, allPhysicsComponents);
 		ResolveInteraction(obj, allPhysicsComponents);
 		break;
+
 	case GameObject::EntityType::DOOR:
 		ResolveInteraction(obj, allPhysicsComponents);
 		break;
+
 	default:
 		break;
 	}

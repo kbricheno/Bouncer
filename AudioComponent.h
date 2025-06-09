@@ -6,10 +6,7 @@
 
 class AudioComponent {
 public:
-	AudioComponent(std::map<std::string, sf::SoundBuffer> const &soundEffects) 
-		: 
-		soundEffects_(soundEffects) 
-	{}
+	AudioComponent(std::map<std::string, sf::SoundBuffer> const &soundEffects) : soundEffects_(soundEffects) {}
 	~AudioComponent() {}
 
 	void Update(GameObject& obj);
