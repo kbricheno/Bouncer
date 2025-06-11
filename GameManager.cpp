@@ -473,14 +473,14 @@ void GameManager::SetupLevelCleared() {
 	activeButtons_.push_back(continueButton);
 }
 
-void GameManager::SetupDetected() {
+void GameManager::SetupLevelFailed(std::string reason) {
 	//update the game state and wipe any previous menu
-	state_ = GameState::DETECTED;
+	state_ = GameState::LEVEL_FAILED;
 	ClearMenu();
 
 	//create and add the text needed for this menu
 	sf::Text infoText(font_);
-	infoText.setString("Your presence was detected!");
+	infoText.setString(reason);
 	infoText.setCharacterSize(75);
 	infoText.setFillColor(sf::Color::White);
 	infoText.setPosition({ hudView.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView.getCenter().y - 50.f });
@@ -517,10 +517,10 @@ void GameManager::SetupLevel() {
 void GameManager::UpdateHud() {
 
 	//while IN_LEVEL, activeText_ contains 2 identical empty sf::Text objects; ask the Level instance to assign their strings and positions
-	currentLevel_[0].UpdateHudAmmo(activeText_[0]);
+	activeText_[0].setString(currentLevel_[0].CurrentAmmoString());
 	activeText_[0].setPosition({ 20.f, 20.f });
 
-	currentLevel_[0].UpdateHudEnemies(activeText_[1]);
+	activeText_[1].setString(currentLevel_[0].EnemiesRemainingString());
 	activeText_[1].setPosition({ hudView.getSize().x - activeText_[1].getLocalBounds().size.x - 40.f, 20.f });
 }
 
@@ -646,7 +646,7 @@ void GameManager::HandleEventQueue() {
 				break;
 
 			//while the player is detected, R restarts the current level
-			case GameManager::GameState::DETECTED:
+			case GameManager::GameState::LEVEL_FAILED:
 				if (keyPressed->scancode == sf::Keyboard::Scancode::R)
 				{
 					CreateLevel(currentLevel_[0].GetLevelId());
@@ -755,16 +755,29 @@ void GameManager::Update(float const deltaTime) {
 		currentLevel_[0].Update(deltaTime);
 		UpdateHud();
 
+
+		//check win condition
 		//check if the level has been cleared (happens when the number of enemies in the level reaches 0)
 		if (currentLevel_[0].GetEnemyCount() == 0) 
 		{
 			SetupLevelCleared();
 		}
 
+		//check lose conditions
 		//check if the player has been detected
 		if (currentLevel_[0].CheckCharacterDetected()) 
 		{
-			SetupDetected();
+			SetupLevelFailed("You were spotted by a guard!");
+		}
+		//check if a dead enemy was detected
+		if (currentLevel_[0].CheckBodyDetected())
+		{
+			SetupLevelFailed("A guard found a body!");
+		}
+		//check if the player shot themselves
+		if (currentLevel_[0].CheckCharacterShot())
+		{
+			SetupLevelFailed("You shot yourself!");
 		}
 	}
 }

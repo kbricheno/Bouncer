@@ -12,10 +12,10 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 	*/
 
 	//create a GameObject, pass in the type of entity, its position, and the size of its Sprite
-	GameObject backgroundObj(GameObject::EntityType::BACKGROUND, { 0,0 }, (sf::Vector2f)allAnimations_.at("background").at(std::to_string(levelId_))[0].getSize(), std::to_string(levelId_));
+	GameObject backgroundObj(GameObject::EntityType::BACKGROUND, { 0,0 }, sf::Sprite(allAnimations_.at("background").at(std::to_string(levelId_))[0]).getLocalBounds().size, std::to_string(levelId_));
 
 	//create a VisualComponent, pass in a pointer to the window, a reference to its Textures (animations), and (in this case) the name of the first animation that should play
-	VisualComponent vComp(window_, allAnimations_.at("background"));
+	VisualComponent vComp(window_, allAnimations_.at("background"), std::to_string(levelId_));
 
 	//store the GameObject and VisualComponent in maps as values, using the currentObjectId as their keys
 	//this allows Components to update the correct GameObject and vice versa
@@ -44,7 +44,7 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 		if (levelPlan[i] == 'W')
 		{
 			//create GameObject
-			GameObject wallObj(GameObject::EntityType::WALL, position, (sf::Vector2f)allAnimations_.at("wall").at("idle")[0].getSize());
+			GameObject wallObj(GameObject::EntityType::WALL, position);
 
 			//create VisualComponent
 			//create PhysicsComponent, pass in the GameObject's type (this affects the collider and/or hitbox it will have)
@@ -64,7 +64,7 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 		else if (levelPlan[i] == 'H' || levelPlan[i] == 'V')
 		{
 			//create GameObject
-			GameObject doorObj(GameObject::EntityType::DOOR, position, (sf::Vector2f)allAnimations_.at("doorHor").at("idle")[0].getSize());
+			GameObject doorObj(GameObject::EntityType::DOOR, position);
 
 			//create VisualComponent and PhysicsComponent
 			//create AudioComponent, pass in a reference to its SoundBuffers (sound effects)
@@ -104,7 +104,7 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 		if (levelPlan[i] == 'E')
 		{
 			//create GameObject
-			GameObject enemyObj(GameObject::EntityType::ENEMY, position, (sf::Vector2f)allAnimations_.at("enemy").at("idle")[0].getSize());
+			GameObject enemyObj(GameObject::EntityType::ENEMY, position);
 
 			//create VisualComponent, PhysicsComponent, AudioComponent
 			//create an enemy-specific ControllerComponent, passing in the currentObjectId used in srand to determine directions the enemy will move in
@@ -120,11 +120,11 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 			physicsComponents_.insert({ currentObjectId, pComp });
 			audioComponents_.insert({ currentObjectId, aComp });
 
-			//increase the id
-			currentObjectId++;
-
 			//record the number of enemies in the level
 			startEnemies_++;
+
+			//increase the id
+			currentObjectId++;
 		}
 
 		if (currentX >= levelSize.x - 1)
@@ -148,7 +148,7 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 		if (levelPlan[i] == 'P')
 		{
 			//create GameObject
-			GameObject characterObj(GameObject::EntityType::CHARACTER, position, (sf::Vector2f)allAnimations_.at("character").at("idle")[0].getSize());
+			GameObject characterObj(GameObject::EntityType::CHARACTER, position);
 
 			//create Components
 			ControllerComponent cComp;
@@ -190,7 +190,7 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir) {
 
 	//create GameObject
-	GameObject bulletObj(GameObject::EntityType::BULLET, startPos, (sf::Vector2f)allAnimations_.at("bullet").at("idle")[0].getSize(), "idle", startDir);
+	GameObject bulletObj(GameObject::EntityType::BULLET, startPos, sf::Vector2f(), "idle", startDir);
 
 	//create Components
 	ControllerComponent cComp;
@@ -217,7 +217,7 @@ void Level::CleanUpDeadEntities()
 
 	for (auto& [id, obj] : gameObjects_)
 	{
-		if (obj.CheckDead()) {
+		if (obj.CheckTaggedForDestruction()) {
 
 			indexesToBeDeleted.push_back(id);
 
@@ -267,13 +267,13 @@ void Level::UpdateView() {
 	levelView.setCenter(centerPos);
 }
 
-void Level::UpdateHudAmmo(sf::Text& ammoText) {
+std::string Level::CurrentAmmoString() {
 
-	ammoText.setString("Ammo: " + std::to_string(ammoCount_) + "/6");
+	return "Ammo: " + std::to_string(ammoCount_) + "/6";
 }
 
-void Level::UpdateHudEnemies(sf::Text& enemiesText) {
-	enemiesText.setString("Enemies remaining: " + std::to_string(enemiesAlive_));
+std::string Level::EnemiesRemainingString() {
+	return "Enemies remaining: " + std::to_string(enemiesAlive_);
 }
 
 #pragma endregion
@@ -313,15 +313,38 @@ void Level::Update(float const deltaTime) {
 	//remove "dead" entities before updating anything
 	CleanUpDeadEntities();
 
+	
+	//update game state altering variables (these determine game over and level clear)
+	int deadEnemyCount = 0;
+	for (auto& [id, obj] : gameObjects_)
+	{
+		//check if the player was detected or killed this frame
+		if (id == characterId) 
+		{
+			if (!obj.CheckEntityAlive()) characterDetected_ = true;
+			if (obj.CheckHitByBullet()) characterHitByBullet_ = true;
+		}
+
+		//check if this object is an enemy
+		else if (obj.GetType() == GameObject::EntityType::ENEMY)
+		{
+			//check if this enemy is dead 
+			if (!obj.CheckEntityAlive()) 
+			{
+				//increase the dead enemy counter
+				deadEnemyCount++;
+				//check if this dead enemy has been detected by another enemy's vision circle
+				if (obj.CheckDeadEnemyDetected()) bodyDetected = true;
+			}
+		}
+	}
+	//update the number of enemies left alive
+	enemiesAlive_ = startEnemies_ - deadEnemyCount;
+
 
 	//update every ControllerComponent
-
 	//get the mouse position in the window, convert it to world space relative to the level view
 	sf::Vector2f mousePos = window_.mapPixelToCoords(sf::Mouse::getPosition(), levelView);
-	
-	//create a counter for the number of dead enemies
-	int deadEnemyCount = 0;
-
 	for (auto& [id, cComp] : controllerComponents_)
 	{
 		//special treatment: only the character needs the mouse position to update its rotation, but may as well pass it to everyone
@@ -329,14 +352,11 @@ void Level::Update(float const deltaTime) {
 		if (cComp.GetEnemyState() == ControllerComponent::EnemyState::DEAD) deadEnemyCount++;
 	}
 
-	//update the number of enemies left alive
-	enemiesAlive_ = startEnemies_ - deadEnemyCount;
-
 
 	//update all the PhysicsComponents
 	for (auto& [id, pComp] : physicsComponents_)
 	{
-		pComp.Update(gameObjects_.at(id), deltaTime, physicsComponents_);
+		pComp.Update(gameObjects_.at(id), deltaTime, gameObjects_, physicsComponents_);
 	}
 }
 

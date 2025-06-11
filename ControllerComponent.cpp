@@ -190,6 +190,9 @@ void ControllerComponent::UpdateEnemyState(GameObject& obj, float const deltaTim
         //perform death actions
         Die(obj);
 
+        //notify the GameObject that this enemy is "dead"
+        obj.SetEntityDead();
+
         //reset the notification so this doesn't trigger multiple times
         obj.NotifyHitByBullet(false);
     }
@@ -321,7 +324,7 @@ void ControllerComponent::BulletSolidCollision(GameObject &obj, bool const horiz
 
     //increase the bullet counter; if it's higher than maxBounces_, destroy the bullet
     obj.SetBulletBounceCount(obj.GetBulletBounceCount() + 1);
-    if (obj.GetBulletBounceCount() > maxBounces_) obj.Kill();
+    if (obj.GetBulletBounceCount() > maxBounces_) obj.Destroy();
 }
 
 #pragma endregion

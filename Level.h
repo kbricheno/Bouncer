@@ -31,10 +31,15 @@ public:
 
 	//game control (hud and progression variables)
 	int GetLevelId() const { return levelId_; }
+	//win state
 	int GetEnemyCount() const { return enemiesAlive_; }
-	bool CheckCharacterDetected() const { return characterAlive_; }
-	void UpdateHudAmmo(sf::Text&);
-	void UpdateHudEnemies(sf::Text&);
+	//3 lose states
+	bool CheckCharacterDetected() const { return characterDetected_; }
+	bool CheckCharacterShot() const { return characterHitByBullet_; }
+	bool CheckBodyDetected() const { return bodyDetected; }
+	//hud text update functions
+	std::string CurrentAmmoString();
+	std::string EnemiesRemainingString();
 
 	//level control (spawning and deleting objects, camera updating)
 	void GenerateLevel(const int tileSize, const std::vector<char>& levelPlan, const sf::Vector2i levelSize);
@@ -71,7 +76,9 @@ private:
 	int characterId = 0;
 
 	//variables for game control & hud
-	bool characterAlive_ = true;
+	bool characterDetected_ = false;
+	bool characterHitByBullet_ = false;
+	bool bodyDetected = false;
 	int startEnemies_ = 0;
 	int enemiesAlive_ = 0;
 	int ammoCount_ = 0;

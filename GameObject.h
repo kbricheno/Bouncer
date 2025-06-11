@@ -2,18 +2,12 @@
 #include <stack>
 #include <SFML/Graphics.hpp>
 
-class ControllerComponent;
-class PhysicsComponent;
-class VisualComponent;
-class AudioComponent;
-
 class GameObject {
 public:
 	enum class EntityType {
 		CHARACTER,
 		BULLET,
 		ENEMY,
-		ENEMY_VISION,
 		WALL,
 		DOOR,
 		BACKGROUND
@@ -31,9 +25,9 @@ public:
 
 	GameObject(EntityType type,
 		sf::Vector2f const position,
-		sf::Vector2f const spriteSize = sf::Vector2f(),
-		std::string startAnim = "idle",
-		sf::Vector2f const direction = sf::Vector2f())
+		sf::Vector2f const spriteSize = sf::Vector2f(), //only necessary if the entity doesn't have a PhysicsComponent
+		std::string startAnim = "idle", //only necessary if the entity needs to use a special starting animation
+		sf::Vector2f const direction = sf::Vector2f()) //only necessary if the entity needs to start moving in a specific direction
 		:
 		type_(type),
 		colliderPosition_(position),
@@ -66,8 +60,14 @@ public:
 	void AddAnimationToStack(std::string newAnim, int frameToLoopFrom = -1) { animationStack_.push(newAnim); loopFrameStack_.push(frameToLoopFrom); }
 	void RemoveAnimationFromStack() { animationStack_.pop(); loopFrameStack_.pop(); }
 
-	bool CheckDead() const { return dead_; }
-	void Kill() { dead_ = true; }
+	bool CheckTaggedForDestruction() const { return dead_; }
+	void Destroy() { dead_ = true; }
+
+	SoundEvent CheckSoundEvent() const { return currentSound_; }
+	void NotifySoundEvent(SoundEvent currentSound) { currentSound_ = currentSound; }
+
+
+	//entity-specific
 
 	bool CheckHorizontalCollision() const { return collidedHorizontally_; }
 	void NotifyHorizontalCollision(bool collidedHor) { collidedHorizontally_ = collidedHor; }
@@ -80,8 +80,11 @@ public:
 	int GetBulletBounceCount() const { return bulletBounceCount_; }
 	void SetBulletBounceCount(int bulletBounceCount) { bulletBounceCount_ = bulletBounceCount; }
 
-	SoundEvent CheckSoundEvent() const { return currentSound_; }
-	void NotifySoundEvent(SoundEvent currentSound) { currentSound_ = currentSound; }
+	bool CheckEntityAlive() { return entityAlive_; }
+	void SetEntityDead() { entityAlive_ = false; }
+
+	bool CheckDeadEnemyDetected() { return deadEnemyDetected_; }
+	void SetBodyDetected() { deadEnemyDetected_ = true; }
 
 private:
 	EntityType type_;
@@ -111,5 +114,7 @@ private:
 	bool collidedVertically_ = false;
 	bool hitByBullet_ = false;
 	int bulletBounceCount_ = 0;
+	bool entityAlive_ = true;
+	bool deadEnemyDetected_ = false;
 };
 

@@ -1,48 +1,46 @@
 #include "PhysicsComponent.h"
+#include <iostream>
 
-void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
+void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<int, GameObject> & allObjs, std::map<int, PhysicsComponent> & allPComps) {
 
-	//perform specific behaviour depending on type of entity
+	//set every entity's collider position
+	collider_.position = obj.GetColliderPosition();
+
+	//set every entity's hitbox position (hitboxes extend slightly further than colliders to ensure objects can interact)
+	hitbox_.position = obj.GetColliderPosition() + (collider_.size - hitbox_.size) / 2.f;
+	secondaryHitbox_.position = obj.GetColliderPosition() + (collider_.size - secondaryHitbox_.size) / 2.f;
+
+	//set every entity's center position (used to draw the sprite if this object has a VisualComponent)
+	obj.SetCenter(collider_.position + (collider_.size / 2.f));
+
+	//some entities move and/or interact with other entities
 	switch (obj.GetType())
 	{
 	case GameObject::EntityType::CHARACTER:
-		Move(obj, deltaTime, allPhysicsComponents);
-		ResolveInteraction(obj, allPhysicsComponents);
+		Move(obj, deltaTime, allPComps);
+		ResolveInteractions(obj, allObjs, allPComps);
 		break;
 
 	case GameObject::EntityType::ENEMY:
-		Move(obj, deltaTime, allPhysicsComponents);
-		ResolveInteraction(obj, allPhysicsComponents);
-		break;
-
-	case GameObject::EntityType::ENEMY_VISION:
-		ResolveInteraction(obj, allPhysicsComponents);
+		Move(obj, deltaTime, allPComps);
+		ResolveInteractions(obj, allObjs, allPComps);
 		break;
 
 	case GameObject::EntityType::BULLET:
-		Move(obj, deltaTime, allPhysicsComponents);
-		ResolveInteraction(obj, allPhysicsComponents);
+		Move(obj, deltaTime, allPComps);
+		ResolveInteractions(obj, allObjs, allPComps);
 		break;
 
 	case GameObject::EntityType::DOOR:
-		ResolveInteraction(obj, allPhysicsComponents);
+		ResolveInteractions(obj, allObjs, allPComps);
 		break;
 
 	default:
 		break;
 	}
-
-	//set the collider position
-	collider_.position = obj.GetColliderPosition();
-
-	//set the hitbox position (hitboxes extend slightly further than colliders to ensure objects can interact)
-	hitbox_.position = collider_.position + (collider_.size - hitbox_.size) / 2.f;	
-
-	//set the center position used to draw the sprite (assuming this object has a VisualComponent)
-	obj.SetCenter(collider_.position + (collider_.size / 2.f));
 }
 
-void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
+void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int, PhysicsComponent>& allPComps) {
 	//don't run move code if move input (direction) is empty
 	if (obj.GetDirection() == sf::Vector2f{ 0, 0 }) return;
 
@@ -56,9 +54,9 @@ void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int
 		//move this collider using proposed positions, then immediately check collisions to validate position
 		//check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
 		collider_.position = { newPosX, obj.GetColliderPosition().y };
-		ResolveCollisions(obj, true, allPhysicsComponents);
+		ResolveCollisions(obj, true, allPComps);
 		collider_.position = { obj.GetColliderPosition().x, newPosY };
-		ResolveCollisions(obj, false, allPhysicsComponents);
+		ResolveCollisions(obj, false, allPComps);
 	}
 	else 
 	{
@@ -66,12 +64,12 @@ void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int
 	}
 }
 
-void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
+void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<int, PhysicsComponent>& allPComps) {
 
 	bool collisionDetected = false;
 
 	//loop through all PhysicsComponents
-	for (auto const& [id, otherPhysComp] : allPhysicsComponents)
+	for (auto const& [id, otherPhysComp] : allPComps)
 	{		
 		//conditions: only check for collisions with PhysicsComponents that have solid colliders, and don't check for collisions with yourself
 		if (otherPhysComp.solid_ && otherPhysComp.collider_ != collider_)
@@ -130,93 +128,102 @@ void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<i
 	if (!collisionDetected) obj.SetColliderPosition(collider_.position);
 }
 
-void PhysicsComponent::ResolveInteraction(GameObject &obj, std::map<int, PhysicsComponent> const& allPhysicsComponents) {
-	for (auto const& [id, pComp] : allPhysicsComponents)
+//Detect intersections between hitboxes, perform interaction checks, then resolve the interaction
+void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameObject>& allObjs, std::map<int, PhysicsComponent>& allPComps) {
+	
+	//iterate through all the PhysicsComponents
+	for (auto& [id, pComp] : allPComps)
 	{
-		//condition: don't check for interactions with yourself
+		//don't check for interactions with yourself
 		if (pComp.hitbox_ != hitbox_)
 		{
 			if (hitbox_.findIntersection(pComp.hitbox_))
 			{
-				//better way to write a collision matrix?
-				//identify this Component's entity type, identify the other Component's entity type, then resolve interaction
+				/*
+				When an intersection between any two hitboxes is detected, perform 4 actions:
+
+				1) Identify this entity's type (ignoring any types that do not interact with anything).
+				2) Identify the other entity's type (ignoring any types that do not interact with this entity).
+				3) Check for conditions that enable an interaction between these entities to happen (i.e. *dead* enemies do not interact with bullets).
+				4) Resolve the interaction for BOTH entities, usually by updating some state on their GameObjects.
+				*/
+
 				switch (obj.GetType())
 				{
-				case GameObject::EntityType::BULLET:
-					switch (pComp.type_)
+				case GameObject::EntityType::BULLET: //1) this entity's type is BULLET
+					switch (allObjs.at(id).GetType())
 					{
-					case GameObject::EntityType::CHARACTER:
-						//if the bullet has bounced at least once (prevents triggering immediately on bullet spawn), destroy it & call game over
-						if (obj.GetBulletBounceCount() > 0)
+					case GameObject::EntityType::CHARACTER: //2) the other entity's type is CHARACTER
+						if (obj.GetBulletBounceCount() > 0)	//3) check the condition: the bullet must have bounced at least once (prevents this from triggering on bullet spawn)
 						{
-							obj.Kill();
-							//trigger game over
+							//4) destroy this entity (the bullet)
+							obj.Destroy();
+
+							//4) notify the other entity (character) it was hit by a bullet
+							allObjs.at(id).NotifyHitByBullet(true);
+						}					
+						break;
+
+					//a bullet is intersecting with an enemy
+					case GameObject::EntityType::ENEMY:
+						//check the enemy is alive (dead enemies and bullets do not interact at all)
+						if (allObjs.at(id).CheckEntityAlive())
+						{
+							//an enemy's primary hitbox is its vision detection radius -- bullets do not interact with this vision hitbox
+							//so only report interactions between a bullet and an enemy if the bullet has also intersected with the secondary hitbox (the enemy's actual body)
+							if (hitbox_.findIntersection(pComp.secondaryHitbox_))
+							{
+								//destroy the bullet
+								obj.Destroy();
+							
+								//notify the enemy it was hit by a bullet
+								allObjs.at(id).NotifyHitByBullet(true);
+							}
 						}
 						break;
 
-					case GameObject::EntityType::ENEMY:
-						obj.Kill();
-						break;
-
+					//a bullet is intersecting with a door
 					case GameObject::EntityType::DOOR:
-						obj.Kill();
-						break;
+						//check if the door is solid (if the door is already broken, there is no interaction)
+						if (pComp.solid_) 
+						{
+							//destroy the bullet
+							obj.Destroy();
 
-					default:
+							//tell the door to play a sound, switch its animation, and make its collider non-solid
+							allObjs.at(id).NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
+							allObjs.at(id).AddAnimationToStack("break", 0);
+							pComp.solid_ = false;
+						}
 						break;
 					}
 					break;
 
 				case GameObject::EntityType::ENEMY:
-					switch (pComp.type_)
+					switch (allObjs.at(id).GetType())
 					{
-					case GameObject::EntityType::CHARACTER:
-						//if the enemy is alive, the player is detected -> game over
-						if (!obj.CheckHitByBullet())
-						{
-							//game over
-						}
-						break;
-
+					//an enemy is intersecting with another enemy
 					case GameObject::EntityType::ENEMY:
-						//if the other enemy is dead, this enemy detects the player's presence -> game over
-						if (obj.CheckHitByBullet())
+						//only handle interactions between enemies if this enemy is dead and its body (secondary hitbox) intersects with another enemy's vision radius (primary hitbox)
+						if (!obj.CheckEntityAlive()) 
 						{
-							//game over
+							if (secondaryHitbox_.findIntersection(pComp.hitbox_)) 
+							{
+								//a dead body has been detected
+								obj.SetBodyDetected();
+							}
 						}
 						break;
 
-					case GameObject::EntityType::BULLET:
-						//"kill" the enemy without destroying it
-						if (!obj.CheckHitByBullet())
+					//an enemy is intersecting with the character
+					case GameObject::EntityType::CHARACTER:
+						//if this enemy is alive, kill the character
+						if (obj.CheckEntityAlive()) 
 						{
-							obj.NotifyHitByBullet(true);
+							allObjs.at(id).SetEntityDead();
 						}
-						break;
-
-					default:
 						break;
 					}
-					break;
-
-				case GameObject::EntityType::DOOR:
-					switch (pComp.type_)
-					{
-					case GameObject::EntityType::BULLET:
-						if (solid_) 
-						{
-							//switch animation, make collider non-solid so player can pass through
-							obj.NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
-							obj.AddAnimationToStack("break", 0);
-							solid_ = false;
-						}
-						break;
-
-					default:
-						break;
-					}
-					break;
-				default:
 					break;
 				}
 			}

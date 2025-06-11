@@ -13,7 +13,7 @@ public:
 		HOW_TO_PLAY,
 		IN_LEVEL,
 		PAUSED,
-		DETECTED,
+		LEVEL_FAILED,
 		LEVEL_CLEARED
 	};
 
@@ -37,10 +37,10 @@ public:
 	void SetupTitle();
 	void SetupMainMenu();
 	void SetupHowToPlay();
+	void SetupLevel();
 	void SetupPause();
 	void SetupLevelCleared();
-	void SetupDetected();
-	void SetupLevel();
+	void SetupLevelFailed(std::string reason);
 	void UpdateHud();
 	void DrawMenu();
 
