@@ -31,5 +31,4 @@ private:
 	int const animationFrameRate_ = 10;
 	float timeElapsedSinceLastFrame_ = 0;
 	int currentFrame_ = 0;
-
 };

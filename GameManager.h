@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "Level.h"
+#include "Button.h"
 
 class GameManager {
 public:
@@ -30,6 +31,7 @@ public:
 	bool GenerateLevelPlan(std::ifstream& const levelsFile);
 	bool GenerateTextures();
 	bool GenerateSoundEffects();
+	bool CreateButtons();
 	void CreateLevel(int const levelId);
 
 	//menus & hud	
@@ -78,13 +80,11 @@ private:
 
 	std::map<std::string, sf::Texture> menuImages_;
 	std::vector<sf::Sprite> activeImages_;
-	std::vector<float> activeButtons_;
-	std::vector<sf::Text> activeText_;
+	
+	std::map<std::string, std::map<std::string, sf::Texture>> buttonImages_;
+	std::map<std::string, Button> activeButtons_;
 
-	float startButton = 0.f;
-	float continueButton = 0.f;
-	float howToPlayButton = 0.f;
-	float quitButton = 0.f;
+	std::vector<sf::Text> activeText_;
 
 	float volumeSlider = 0.f;
 };

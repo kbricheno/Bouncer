@@ -295,13 +295,67 @@ bool GameManager::GenerateTextures() {
 
 
 	//menu Textures .....................................................................................................................................................
-	sf::Texture titleTexture;
-	if (!titleTexture.loadFromFile("Assets/UI/titleScreen.png")) return false;
-	menuImages_.insert({ "title", titleTexture });
+	sf::Texture titleBackground;
+	if (!titleBackground.loadFromFile("Assets/UI/titleScreen.png")) return false;
+	menuImages_.insert({ "title", titleBackground });
+
+	sf::Texture howToPlayBackground;
+	if (!howToPlayBackground.loadFromFile("Assets/UI/instructions.png")) return false;
+	menuImages_.insert({ "howToPlay", howToPlayBackground });
+
+
+	//button Textures .....................................................................................................................................................
+	std::map<std::string, sf::Texture> startImages;
+	std::map<std::string, sf::Texture> continueImages;
+	std::map<std::string, sf::Texture> quitImages;
+	std::map<std::string, sf::Texture> howToPlayImages;
+	std::map<std::string, sf::Texture> mainMenuImages;
+	std::map<std::string, sf::Texture> volumeImages;
+
+	sf::Texture startTexture;
+	sf::Texture startHoveredTexture;
+	if (!startTexture.loadFromFile("Assets/UI/start.png")) return false;
+	if (!startHoveredTexture.loadFromFile("Assets/UI/startHover.png")) return false;
+	startImages.insert({ "unhovered", startTexture });
+	startImages.insert({ "hovered", startHoveredTexture });
+
+	buttonImages_.insert({ "start", startImages });
+
+	sf::Texture continueTexture;
+	sf::Texture continueHoveredTexture;
+	if (!continueTexture.loadFromFile("Assets/UI/continue.png")) return false;
+	if (!continueHoveredTexture.loadFromFile("Assets/UI/continueHover.png")) return false;
+	continueImages.insert({ "unhovered", continueTexture });
+	continueImages.insert({ "hovered", continueHoveredTexture });
+
+	buttonImages_.insert({ "continue", continueImages });
+
+	sf::Texture quitTexture;
+	sf::Texture quitHoveredTexture;
+	if (!quitTexture.loadFromFile("Assets/UI/quit.png")) return false;
+	if (!quitHoveredTexture.loadFromFile("Assets/UI/quitHover.png")) return false;
+	quitImages.insert({ "unhovered", quitTexture });
+	quitImages.insert({ "hovered", quitHoveredTexture });
+
+	buttonImages_.insert({ "quit", quitImages });
 
 	sf::Texture howToPlayTexture;
-	if (!howToPlayTexture.loadFromFile("Assets/UI/instructions.png")) return false;
-	menuImages_.insert({ "howToPlay", howToPlayTexture });
+	sf::Texture howToPlayHoveredTexture;
+	if (!howToPlayBackground.loadFromFile("Assets/UI/howToPlay.png")) return false;
+	if (!howToPlayHoveredTexture.loadFromFile("Assets/UI/howToPlayHover.png")) return false;
+	howToPlayImages.insert({ "unhovered", howToPlayBackground });
+	howToPlayImages.insert({ "hovered", howToPlayHoveredTexture });
+
+	buttonImages_.insert({ "howToPlay", howToPlayImages });
+
+	sf::Texture mainMenuTexture;
+	sf::Texture mainMenuHoveredTexture;
+	if (!mainMenuTexture.loadFromFile("Assets/UI/mainMenu.png")) return false;
+	if (!mainMenuHoveredTexture.loadFromFile("Assets/UI/mainMenuHover.png")) return false;
+	mainMenuImages.insert({ "unhovered", mainMenuTexture });
+	mainMenuImages.insert({ "hovered", mainMenuHoveredTexture });
+
+	buttonImages_.insert({ "mainMenu", mainMenuImages });
 
 
 	//all textures successfully loaded
@@ -411,17 +465,15 @@ void GameManager::SetupMainMenu() {
 	ClearMenu();
 
 	//add the buttons needed for this menu
-	activeButtons_.push_back(startButton);
-	activeButtons_.push_back(howToPlayButton);
-	activeButtons_.push_back(volumeSlider);
-	activeButtons_.push_back(quitButton);
+	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	sf::Text tempText(font_);
-	tempText.setString("main menu!!!");
-	tempText.setCharacterSize(75);
-	tempText.setFillColor(sf::Color::White);
-	tempText.setPosition(hudView.getCenter());
-	activeText_.push_back(tempText);
+	Button startButton(buttonImages_.at("start"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y - buttonSize.y * 2.f));
+	Button howToPlayButton(buttonImages_.at("howToPlay"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y - buttonSize.y));
+	Button quitButton(buttonImages_.at("quit"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y));
+	activeButtons_.insert({ "start", startButton });
+	activeButtons_.insert({ "howToPlay", howToPlayButton });
+	activeButtons_.insert({ "quit", quitButton });
+	//TODO: volume slider
 }
 
 void GameManager::SetupHowToPlay() {
@@ -435,7 +487,11 @@ void GameManager::SetupHowToPlay() {
 	howToPlayBackground.setPosition(hudView.getCenter());	
 	activeImages_.push_back(howToPlayBackground);
 
-	activeButtons_.push_back(startButton);
+	//add the button needed for this menu
+	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
+
+	Button startButton(buttonImages_.at("start"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getSize().y - buttonSize.y * 1.5f));
+	activeButtons_.insert({ "start", startButton });
 }
 
 void GameManager::SetupPause() {
@@ -444,16 +500,20 @@ void GameManager::SetupPause() {
 	ClearMenu();
 
 	//add the buttons needed for this menu
-	activeButtons_.push_back(continueButton);
-	activeButtons_.push_back(volumeSlider);
-	activeButtons_.push_back(quitButton);
+	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	sf::Text tempText(font_);
-	tempText.setString("game is paused!!!");
-	tempText.setCharacterSize(75);
-	tempText.setFillColor(sf::Color::White);
-	tempText.setPosition(hudView.getCenter());
-	activeText_.push_back(tempText);
+	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y - buttonSize.y * 2.f));
+	Button mainMenuButton(buttonImages_.at("mainMenu"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y));
+	activeButtons_.insert({ "continue", continueButton });
+	activeButtons_.insert({ "mainMenu", mainMenuButton });
+	//TODO: volume slider
+
+	sf::Text pausedText(font_);
+	pausedText.setString("PAUSED");
+	pausedText.setCharacterSize(50);
+	pausedText.setFillColor(sf::Color::White);
+	pausedText.setPosition({ hudView.getCenter().x - pausedText.getLocalBounds().size.x / 2.f, hudView.getCenter().y - buttonSize.y * 3.f });
+	activeText_.push_back(pausedText);
 }
 
 void GameManager::SetupLevelCleared() {
@@ -464,13 +524,16 @@ void GameManager::SetupLevelCleared() {
 	//create and add the text needed for this menu
 	sf::Text infoText(font_);
 	infoText.setString("Level cleared!");
-	infoText.setCharacterSize(75);
+	infoText.setCharacterSize(50);
 	infoText.setFillColor(sf::Color::White);
 	infoText.setPosition({ hudView.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView.getCenter().y - 50.f });
 	activeText_.push_back(infoText);
 
-	//add the buttons needed for this menu
-	activeButtons_.push_back(continueButton);
+	//add the button needed for this menu
+	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
+
+	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getSize().y - buttonSize.y * 1.5f));
+	activeButtons_.insert({ "continue", continueButton });
 }
 
 void GameManager::SetupLevelFailed(std::string reason) {
@@ -481,20 +544,23 @@ void GameManager::SetupLevelFailed(std::string reason) {
 	//create and add the text needed for this menu
 	sf::Text infoText(font_);
 	infoText.setString(reason);
-	infoText.setCharacterSize(75);
+	infoText.setCharacterSize(50);
 	infoText.setFillColor(sf::Color::White);
 	infoText.setPosition({ hudView.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView.getCenter().y - 50.f });
 	activeText_.push_back(infoText);
 
 	sf::Text restartText(font_);
 	restartText.setString("Press R to restart!");
-	restartText.setCharacterSize(75);
+	restartText.setCharacterSize(50);
 	restartText.setFillColor(sf::Color::White);
-	restartText.setPosition({ hudView.getCenter().x - (restartText.getLocalBounds().size.x / 2.f), hudView.getCenter().y });
+	restartText.setPosition({ hudView.getCenter().x - (restartText.getLocalBounds().size.x / 2.f), hudView.getCenter().y + 50.f });
 	activeText_.push_back(restartText);
 
-	//add the buttons needed for this menu
-	activeButtons_.push_back(continueButton);
+	//add the button needed for this menu
+	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
+
+	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getSize().y - buttonSize.y * 1.5f));
+	activeButtons_.insert({ "continue", continueButton });
 }
 
 void GameManager::SetupLevel() {
@@ -503,12 +569,12 @@ void GameManager::SetupLevel() {
 	ClearMenu();
 
 	sf::Text ammoText(font_);
-	ammoText.setCharacterSize(75);
+	ammoText.setCharacterSize(50);
 	ammoText.setFillColor(sf::Color::White);
 	activeText_.push_back(ammoText);
 
 	sf::Text enemiesText(font_);
-	enemiesText.setCharacterSize(75);
+	enemiesText.setCharacterSize(50);
 	enemiesText.setFillColor(sf::Color::White);
 	activeText_.push_back(enemiesText);
 }
@@ -543,9 +609,11 @@ void GameManager::DrawMenu() {
 	}
 
 	//draw any buttons that exist
-	for (int i = 0; i < activeButtons_.size(); i++)
+	for (auto& [name, button] : activeButtons_)
 	{
-		//draw buttons
+		button.CheckIsHovered(window_.mapPixelToCoords(sf::Mouse::getPosition(), hudView));
+		
+		window_.draw(button.GetSprite());
 	}
 }
 
@@ -577,48 +645,6 @@ void GameManager::HandleEventQueue() {
 				SetupMainMenu();
 				break;
 
-			//while in the main menu, pressing H opens how to play, Enter creates the first level, and Esc closes the game
-			case GameManager::GameState::MAIN_MENU:
-				if (keyPressed->scancode == sf::Keyboard::Scancode::H)
-				{
-					SetupHowToPlay();
-				}
-				else if (keyPressed->scancode == sf::Keyboard::Scancode::Enter)
-				{
-					CreateLevel(0);
-					SetupLevel();
-				}
-				//debug
-				else if (keyPressed->scancode == sf::Keyboard::Scancode::Num2)
-				{
-					CreateLevel(1);
-					SetupLevel();
-				}
-				else if (keyPressed->scancode == sf::Keyboard::Scancode::Num3)
-				{
-					CreateLevel(2);
-					SetupLevel();
-				}
-				else if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
-				{
-					window_.close();
-				}
-				break;
-
-			//while in how to play, pressing Enter creates the first level, and Backspace returns to the main menu
-			case GameManager::GameState::HOW_TO_PLAY:
-				if (keyPressed->scancode == sf::Keyboard::Scancode::Enter)
-				{
-					//create the first level
-					CreateLevel(0);
-					SetupLevel();
-				}
-				else if (keyPressed->scancode == sf::Keyboard::Scancode::Backspace)
-				{
-					SetupMainMenu();
-				}
-				break;
-
 			//while in level, pressing Esc pauses the game, and R requests a weapon reload
 			case GameManager::GameState::IN_LEVEL:
 				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
@@ -637,12 +663,6 @@ void GameManager::HandleEventQueue() {
 				{
 					SetupLevel();
 				}
-				else if (keyPressed->scancode == sf::Keyboard::Scancode::Backspace) 
-				{
-					//destroy existing level
-					currentLevel_.clear();
-					SetupMainMenu();
-				}
 				break;
 
 			//while the player is detected, R restarts the current level
@@ -651,22 +671,6 @@ void GameManager::HandleEventQueue() {
 				{
 					CreateLevel(currentLevel_[0].GetLevelId());
 					SetupLevel();
-				}
-				break;
-				
-			//while the current level is finished, pressing Enter creates the next level or returns to title if the current level is the final one
-			case GameManager::GameState::LEVEL_CLEARED:
-				if (keyPressed->scancode == sf::Keyboard::Scancode::Enter)
-				{
-					if (currentLevel_[0].GetLevelId() < allLevelPlans_.size())
-					{
-						CreateLevel(currentLevel_[0].GetLevelId() + 1);
-						SetupLevel();
-					}
-					else
-					{
-						SetupTitle();
-					}
 				}
 				break;
 
@@ -680,7 +684,118 @@ void GameManager::HandleEventQueue() {
 		{
 			if (mouseButtonPressed->button == sf::Mouse::Button::Left)
 			{	
-				if (state_ == GameState::IN_LEVEL) currentLevel_[0].CommandShoot();
+				//record the mouse position when the left button was clicked
+				sf::Vector2f mousePos = window_.mapPixelToCoords(sf::Mouse::getPosition(), hudView);
+
+				//check button clicks for menu progression
+				switch (state_)
+				{
+
+				//while in the title, clicking anywhere progresses to the main menu
+				case GameManager::GameState::TITLE:
+					SetupMainMenu();
+					break;
+
+				case GameManager::GameState::MAIN_MENU:
+					for (auto& [name, button] : activeButtons_)
+					{
+						if (button.CheckIsHovered(mousePos)) 
+						{
+							if (name == "start") 
+							{
+								CreateLevel(0); 
+								SetupLevel();
+								break;
+							}
+							if (name == "howToPlay") 
+							{
+								SetupHowToPlay();
+								break;
+							}
+							if (name == "quit") 
+							{
+								window_.close();
+								break;
+							}
+						}
+					}
+					break;
+
+				case GameManager::GameState::HOW_TO_PLAY:
+					for (auto& [name, button] : activeButtons_) 
+					{
+						if (button.CheckIsHovered(mousePos))
+						{
+							CreateLevel(0);
+							SetupLevel();
+							break;
+						}
+					}
+					break;
+
+				//while in level, clicking shoots the character's weapon
+				case GameManager::GameState::IN_LEVEL:
+					currentLevel_[0].CommandShoot();
+					break;
+
+				case GameManager::GameState::PAUSED:
+					for (auto& [name, button] : activeButtons_) 
+					{
+						if (button.CheckIsHovered(mousePos))
+						{
+							if (name == "continue")
+							{
+								SetupLevel();
+								break;
+							}
+							if (name == "mainMenu")
+							{
+								//destroy existing level
+								currentLevel_.clear();
+								SetupMainMenu();
+								break;
+							}
+						}
+					}
+					break;
+
+				case GameManager::GameState::LEVEL_FAILED:
+					for (auto& [name, button] : activeButtons_) 
+					{
+						if (button.CheckIsHovered(mousePos))
+						{
+							CreateLevel(currentLevel_[0].GetLevelId());
+							SetupLevel();
+							break;
+						}
+					}
+					break;
+
+				case GameManager::GameState::LEVEL_CLEARED:
+					for (auto& [name, button] : activeButtons_)
+					{
+						if (button.CheckIsHovered(mousePos))
+						{
+							if (currentLevel_[0].GetLevelId() < allLevelPlans_.size() - 1)
+							{
+								CreateLevel(currentLevel_[0].GetLevelId() + 1);
+								SetupLevel();
+								break;
+							}
+							else
+							{
+								//destroy existing level
+								currentLevel_.clear();
+								SetupTitle();
+								break;
+							}
+						}
+					}
+					break;
+
+				default:
+					break;
+				}
 			}
 		}
 	}

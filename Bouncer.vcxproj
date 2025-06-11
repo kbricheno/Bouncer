@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="AudioComponent.cpp" />
     <ClCompile Include="Bouncer.cpp" />
+    <ClCompile Include="Button.cpp" />
     <ClCompile Include="ControllerComponent.cpp" />
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="PhysicsComponent.cpp" />
@@ -150,6 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioComponent.h" />
+    <ClInclude Include="Button.h" />
     <ClInclude Include="ControllerComponent.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Level.h" />
