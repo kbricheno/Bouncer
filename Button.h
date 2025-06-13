@@ -4,17 +4,28 @@
 
 class Button {
 public:
-	Button(std::map<std::string, sf::Texture> const& textures, sf::Vector2f position = sf::Vector2f()) : textures_(textures) 
-	{
-		sprite_[0].setPosition(position);
-	}
+	//Constructor for a regular Button
+	Button(std::map<std::string, sf::Texture> const& textures, sf::Vector2f const position = sf::Vector2f());
+
+	//Constructor for a left-to-right bar slider Button
+	Button(std::map<std::string, sf::Texture> const& textures, sf::Vector2f const position, float const leftMostPos, float const rightMostPos);
+
 	~Button() {}
 
-	sf::Sprite GetSprite() { return sprite_[0]; }
+	//get the sprite for drawing
+	sf::Sprite GetSprite() { return sprite_; }
 
+	//get the x boundaries that the bar slider Button is allowed to move within
+	float GetMinX() { return m_leftMostPos; }
+	float GetMaxX() { return m_rightMostPos; }
+
+	//check if the bounds of the Button contain the mouse position
 	bool CheckIsHovered(sf::Vector2f const mousePos);
 
 private:
 	std::map<std::string, sf::Texture> const& textures_;
-	std::array<sf::Sprite, 1> sprite_ = { sf::Sprite(textures_.at("unhovered"))};
+	sf::Sprite sprite_ = sf::Sprite(textures_.at("unhovered"));
+
+	float m_leftMostPos = 0;
+	float m_rightMostPos = 0;
 };

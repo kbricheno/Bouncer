@@ -22,6 +22,7 @@ public:
 		GAME_OVER,
 		VICTORY
 	};
+	GameObject() {}
 
 	GameObject(EntityType type,
 		sf::Vector2f const position,
@@ -60,7 +61,7 @@ public:
 	void AddAnimationToStack(std::string newAnim, int frameToLoopFrom = -1) { animationStack_.push(newAnim); loopFrameStack_.push(frameToLoopFrom); }
 	void RemoveAnimationFromStack() { animationStack_.pop(); loopFrameStack_.pop(); }
 
-	bool CheckTaggedForDestruction() const { return dead_; }
+	bool IsTaggedForDestruction() const { return dead_; }
 	void Destroy() { dead_ = true; }
 
 	SoundEvent CheckSoundEvent() const { return currentSound_; }
@@ -69,9 +70,9 @@ public:
 
 	//entity-specific
 
-	bool CheckHorizontalCollision() const { return collidedHorizontally_; }
+	bool IsCollidingHorizontally() const { return collidedHorizontally_; }
 	void NotifyHorizontalCollision(bool collidedHor) { collidedHorizontally_ = collidedHor; }
-	bool CheckVerticalCollision() const { return collidedVertically_; }
+	bool IsCollidingVertically() const { return collidedVertically_; }
 	void NotifyVerticalCollision(bool collidedVer) { collidedVertically_ = collidedVer; }
 
 	bool CheckHitByBullet() const { return hitByBullet_; }

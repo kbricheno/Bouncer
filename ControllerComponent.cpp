@@ -18,13 +18,13 @@ void ControllerComponent::Update(GameObject &obj, float const deltaTime, sf::Vec
 
     case GameObject::EntityType::BULLET:
         //the only thing bullets need to do is check if they collided with something solid
-        if (obj.CheckHorizontalCollision()) //bullet hit a left/right wall
+        if (obj.IsCollidingHorizontally()) //bullet hit a left/right wall
         {
             //reset the notification so this doesn't trigger constantly
             obj.NotifyHorizontalCollision(false);
             BulletSolidCollision(obj, true);
         }
-        else if (obj.CheckVerticalCollision()) //bullet hit a top/bottom wall
+        else if (obj.IsCollidingVertically()) //bullet hit a top/bottom wall
         {
             obj.NotifyVerticalCollision(false);
             BulletSolidCollision(obj, false);
@@ -204,7 +204,7 @@ void ControllerComponent::UpdateEnemyState(GameObject& obj, float const deltaTim
         randomTurnTimer_ -= deltaTime;
 
         //if enemy randomly decides to turn or collides with a wall
-        if (randomTurnTimer_ <= 0 || obj.CheckHorizontalCollision() || obj.CheckVerticalCollision())
+        if (randomTurnTimer_ <= 0 || obj.IsCollidingHorizontally() || obj.IsCollidingVertically())
         {
             //stop moving
             Stop(obj);

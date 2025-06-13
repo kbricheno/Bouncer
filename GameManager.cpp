@@ -19,8 +19,8 @@ void GameManager::PrepareLevelGeneration(std::ifstream& const levelsFile) {
 	if (!GenerateSoundEffects()) std::cout << "ERROR: Could not find all sound effect file paths!\n";
 
 	//prepare the view used for drawing menus and the hud
-	hudView.setSize((sf::Vector2f)sf::VideoMode::getDesktopMode().size);
-	hudView.setCenter((sf::Vector2f)sf::VideoMode::getDesktopMode().size / 2.f);
+	hudView_.setSize((sf::Vector2f)sf::VideoMode::getDesktopMode().size);
+	hudView_.setCenter((sf::Vector2f)sf::VideoMode::getDesktopMode().size / 2.f);
 
 	//set up the title screen
 	SetupTitle();
@@ -303,6 +303,10 @@ bool GameManager::GenerateTextures() {
 	if (!howToPlayBackground.loadFromFile("Assets/UI/instructions.png")) return false;
 	menuImages_.insert({ "howToPlay", howToPlayBackground });
 
+	sf::Texture volumeBackground;
+	if (!volumeBackground.loadFromFile("Assets/UI/volume.png")) return false;
+	menuImages_.insert({ "volume", volumeBackground });
+
 
 	//button Textures .....................................................................................................................................................
 	std::map<std::string, sf::Texture> startImages;
@@ -310,7 +314,7 @@ bool GameManager::GenerateTextures() {
 	std::map<std::string, sf::Texture> quitImages;
 	std::map<std::string, sf::Texture> howToPlayImages;
 	std::map<std::string, sf::Texture> mainMenuImages;
-	std::map<std::string, sf::Texture> volumeImages;
+	std::map<std::string, sf::Texture> volumeKnobImages;
 
 	sf::Texture startTexture;
 	sf::Texture startHoveredTexture;
@@ -356,6 +360,12 @@ bool GameManager::GenerateTextures() {
 	mainMenuImages.insert({ "hovered", mainMenuHoveredTexture });
 
 	buttonImages_.insert({ "mainMenu", mainMenuImages });
+
+	sf::Texture volumeKnobTexture;
+	if (!volumeKnobTexture.loadFromFile("Assets/UI/barKnob.png")) return false;
+	volumeKnobImages.insert({ "unhovered", volumeKnobTexture });
+
+	buttonImages_.insert({ "volumeKnob", volumeKnobImages });
 
 
 	//all textures successfully loaded
@@ -453,7 +463,7 @@ void GameManager::SetupTitle() {
 	//create a sprite from the title background image
 	sf::Sprite titleBackground(menuImages_.at("title"));
 	titleBackground.setOrigin(titleBackground.getLocalBounds().size / 2.f);
-	titleBackground.setPosition(hudView.getCenter());
+	titleBackground.setPosition(hudView_.getCenter());
 
 	//store the background sprite
 	activeImages_.push_back(titleBackground);
@@ -467,13 +477,24 @@ void GameManager::SetupMainMenu() {
 	//add the buttons needed for this menu
 	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	Button startButton(buttonImages_.at("start"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y - buttonSize.y * 2.f));
-	Button howToPlayButton(buttonImages_.at("howToPlay"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y - buttonSize.y));
-	Button quitButton(buttonImages_.at("quit"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y));
+	Button startButton(buttonImages_.at("start"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y - buttonSize.y * 2.f));
+	Button howToPlayButton(buttonImages_.at("howToPlay"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y - buttonSize.y));
+	Button quitButton(buttonImages_.at("quit"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y + buttonSize.y));
 	activeButtons_.insert({ "start", startButton });
 	activeButtons_.insert({ "howToPlay", howToPlayButton });
 	activeButtons_.insert({ "quit", quitButton });
-	//TODO: volume slider
+
+	//volume slider
+	//create the background for the volume slider
+	sf::Sprite volumeBackground(menuImages_.at("volume"));
+	volumeBackground.setOrigin(volumeBackground.getLocalBounds().size / 2.f);
+	volumeBackground.setPosition(sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y));
+	activeImages_.push_back(volumeBackground);
+
+	//create and add the button for the volume slider
+	sf::Vector2f knobSize = (sf::Vector2f)buttonImages_.at("volumeKnob").at("unhovered").getSize();
+	Button volumeKnob(buttonImages_.at("volumeKnob"), volumeBackground.getGlobalBounds().position + knobSize, volumeBackground.getGlobalBounds().position.x, volumeBackground.getGlobalBounds().size.x);
+	activeButtons_.insert({ "volumeKnob", volumeKnob });
 }
 
 void GameManager::SetupHowToPlay() {
@@ -484,13 +505,13 @@ void GameManager::SetupHowToPlay() {
 	//add the background image and buttons needed for this menu
 	sf::Sprite howToPlayBackground(menuImages_.at("howToPlay"));
 	howToPlayBackground.setOrigin(howToPlayBackground.getLocalBounds().size / 2.f);
-	howToPlayBackground.setPosition(hudView.getCenter());	
+	howToPlayBackground.setPosition(hudView_.getCenter());	
 	activeImages_.push_back(howToPlayBackground);
 
 	//add the button needed for this menu
 	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	Button startButton(buttonImages_.at("start"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getSize().y - buttonSize.y * 1.5f));
+	Button startButton(buttonImages_.at("start"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getSize().y - buttonSize.y * 1.5f));
 	activeButtons_.insert({ "start", startButton });
 }
 
@@ -502,17 +523,29 @@ void GameManager::SetupPause() {
 	//add the buttons needed for this menu
 	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y - buttonSize.y * 2.f));
-	Button mainMenuButton(buttonImages_.at("mainMenu"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getCenter().y));
+	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y - buttonSize.y * 2.f));
+	Button mainMenuButton(buttonImages_.at("mainMenu"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y));
 	activeButtons_.insert({ "continue", continueButton });
 	activeButtons_.insert({ "mainMenu", mainMenuButton });
-	//TODO: volume slider
 
+	//volume slider
+	//create the background for the volume slider
+	sf::Sprite volumeBackground(menuImages_.at("volume"));
+	volumeBackground.setOrigin(volumeBackground.getLocalBounds().size / 2.f);
+	volumeBackground.setPosition(sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getCenter().y - buttonSize.y));
+	activeImages_.push_back(volumeBackground);
+
+	//create and add the button for the volume slider
+	sf::Vector2f knobSize = (sf::Vector2f)buttonImages_.at("volumeKnob").at("unhovered").getSize();
+	Button volumeKnob(buttonImages_.at("volumeKnob"), volumeBackground.getGlobalBounds().position + knobSize, volumeBackground.getGlobalBounds().position.x, volumeBackground.getGlobalBounds().size.x);
+	activeButtons_.insert({ "volumeKnob", volumeKnob });
+
+	//add the "paused" text
 	sf::Text pausedText(font_);
 	pausedText.setString("PAUSED");
 	pausedText.setCharacterSize(50);
 	pausedText.setFillColor(sf::Color::White);
-	pausedText.setPosition({ hudView.getCenter().x - pausedText.getLocalBounds().size.x / 2.f, hudView.getCenter().y - buttonSize.y * 3.f });
+	pausedText.setPosition({ hudView_.getCenter().x - pausedText.getLocalBounds().size.x / 2.f, hudView_.getCenter().y - buttonSize.y * 3.f });
 	activeText_.push_back(pausedText);
 }
 
@@ -526,13 +559,13 @@ void GameManager::SetupLevelCleared() {
 	infoText.setString("Level cleared!");
 	infoText.setCharacterSize(50);
 	infoText.setFillColor(sf::Color::White);
-	infoText.setPosition({ hudView.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView.getCenter().y - 50.f });
+	infoText.setPosition({ hudView_.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView_.getCenter().y - 50.f });
 	activeText_.push_back(infoText);
 
 	//add the button needed for this menu
 	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getSize().y - buttonSize.y * 1.5f));
+	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getSize().y - buttonSize.y * 1.5f));
 	activeButtons_.insert({ "continue", continueButton });
 }
 
@@ -546,20 +579,20 @@ void GameManager::SetupLevelFailed(std::string reason) {
 	infoText.setString(reason);
 	infoText.setCharacterSize(50);
 	infoText.setFillColor(sf::Color::White);
-	infoText.setPosition({ hudView.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView.getCenter().y - 50.f });
+	infoText.setPosition({ hudView_.getCenter().x - (infoText.getLocalBounds().size.x / 2.f), hudView_.getCenter().y - 50.f });
 	activeText_.push_back(infoText);
 
 	sf::Text restartText(font_);
 	restartText.setString("Press R to restart!");
 	restartText.setCharacterSize(50);
 	restartText.setFillColor(sf::Color::White);
-	restartText.setPosition({ hudView.getCenter().x - (restartText.getLocalBounds().size.x / 2.f), hudView.getCenter().y + 50.f });
+	restartText.setPosition({ hudView_.getCenter().x - (restartText.getLocalBounds().size.x / 2.f), hudView_.getCenter().y + 50.f });
 	activeText_.push_back(restartText);
 
 	//add the button needed for this menu
 	sf::Vector2f buttonSize = (sf::Vector2f)buttonImages_.at("start").at("hovered").getSize();
 
-	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView.getCenter().x - buttonSize.x / 2.f, hudView.getSize().y - buttonSize.y * 1.5f));
+	Button continueButton(buttonImages_.at("continue"), sf::Vector2f(hudView_.getCenter().x - buttonSize.x / 2.f, hudView_.getSize().y - buttonSize.y * 1.5f));
 	activeButtons_.insert({ "continue", continueButton });
 }
 
@@ -587,14 +620,35 @@ void GameManager::UpdateHud() {
 	activeText_[0].setPosition({ 20.f, 20.f });
 
 	activeText_[1].setString(currentLevel_[0].EnemiesRemainingString());
-	activeText_[1].setPosition({ hudView.getSize().x - activeText_[1].getLocalBounds().size.x - 40.f, 20.f });
+	activeText_[1].setPosition({ hudView_.getSize().x - activeText_[1].getLocalBounds().size.x - 40.f, 20.f });
+}
+
+void GameManager::UpdateVolumeSlider(sf::Vector2f const inMousePos) {
+
+	//create a local variable for the volume knob Button (for readability)
+	Button volumeKnob = activeButtons_.at("volumeKnob");
+
+	//determine the X position based on the mouse's X position clamped within the bounds of the volume slider
+	float posX = inMousePos.x;
+	if (posX > volumeKnob.GetMaxX()) posX = volumeKnob.GetMaxX();
+	else if (posX < volumeKnob.GetMinX()) posX = volumeKnob.GetMinX();
+
+	//the Y position will remain the same
+	float posY = activeButtons_.at("volumeKnob").GetSprite().getPosition().y;
+
+	//set the volume knob Button's position accordingly
+	activeButtons_.at("volumeKnob").GetSprite().setPosition({ posX, posY });
+
+	//generate a volume value from the position of the volume knob relative to its slider
+	float volume = (volumeKnob.GetSprite().getPosition().x - volumeKnob.GetMinX()) / (volumeKnob.GetMaxX() - volumeKnob.GetMinX());
+	std::cout << volume;
 }
 
 //Draw the currently-active menu objects
 void GameManager::DrawMenu() {
 
 	//set the view to be drawn to
-	window_.setView(hudView);
+	window_.setView(hudView_);
 	
 	//draw a background image, if one exists
 	for (int i = 0; i < activeImages_.size(); i++)
@@ -611,7 +665,7 @@ void GameManager::DrawMenu() {
 	//draw any buttons that exist
 	for (auto& [name, button] : activeButtons_)
 	{
-		button.CheckIsHovered(window_.mapPixelToCoords(sf::Mouse::getPosition(), hudView));
+		button.CheckIsHovered(window_.mapPixelToCoords(sf::Mouse::getPosition(), hudView_));
 		
 		window_.draw(button.GetSprite());
 	}
@@ -685,7 +739,7 @@ void GameManager::HandleEventQueue() {
 			if (mouseButtonPressed->button == sf::Mouse::Button::Left)
 			{	
 				//record the mouse position when the left button was clicked
-				sf::Vector2f mousePos = window_.mapPixelToCoords(sf::Mouse::getPosition(), hudView);
+				sf::Vector2f mousePos = window_.mapPixelToCoords(sf::Mouse::getPosition(), hudView_);
 
 				//check button clicks for menu progression
 				switch (state_)
@@ -710,6 +764,11 @@ void GameManager::HandleEventQueue() {
 							if (name == "howToPlay") 
 							{
 								SetupHowToPlay();
+								break;
+							}
+							if (name == "volumeKnob")
+							{
+								UpdateVolumeSlider(mousePos);
 								break;
 							}
 							if (name == "quit") 

@@ -31,7 +31,6 @@ public:
 	bool GenerateLevelPlan(std::ifstream& const levelsFile);
 	bool GenerateTextures();
 	bool GenerateSoundEffects();
-	bool CreateButtons();
 	void CreateLevel(int const levelId);
 
 	//menus & hud	
@@ -42,8 +41,9 @@ public:
 	void SetupLevel();
 	void SetupPause();
 	void SetupLevelCleared();
-	void SetupLevelFailed(std::string reason);
+	void SetupLevelFailed(std::string const inReasonForFailure);
 	void UpdateHud();
+	void UpdateVolumeSlider(sf::Vector2f const inMousePos);
 	void DrawMenu();
 
 	//user input
@@ -76,7 +76,7 @@ private:
 
 
 	//hud & menu variables
-	sf::View hudView;
+	sf::View hudView_;
 
 	std::map<std::string, sf::Texture> menuImages_;
 	std::vector<sf::Sprite> activeImages_;
@@ -86,5 +86,5 @@ private:
 
 	std::vector<sf::Text> activeText_;
 
-	float volumeSlider = 0.f;
+	float volumeSlider_ = 0.f;
 };

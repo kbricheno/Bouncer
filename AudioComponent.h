@@ -14,4 +14,5 @@ public:
 private:
 	std::map<std::string, sf::SoundBuffer> soundEffects_;
 	std::array<sf::Sound, 1> sounds_ = {sf::Sound(soundEffects_.begin()->second)}; //there's only one sound per entity but have to use an array because you can't make an empty container for a single object
+	GameObject obj;
 };

@@ -1,6 +1,44 @@
 #include "PhysicsComponent.h"
 #include <iostream>
 
+PhysicsComponent::PhysicsComponent(GameObject::EntityType type, float const speed) : speed_(speed) 
+{
+	//create a collider and/or hitbox for each type of physics-affected entity
+	switch (type)
+	{
+	case GameObject::EntityType::CHARACTER:
+		collider_ = sf::FloatRect({ 0,0 }, { 40,40 }); //presence of a collider means this object interacts with other colliders
+		hitbox_ = sf::FloatRect({ 0,0 }, { 45,45 }); //presence of a hitbox means this object interacts with other hitboxes
+		break;
+
+	case GameObject::EntityType::ENEMY:
+		collider_ = sf::FloatRect({ 0,0 }, { 50,50 });
+		hitbox_ = sf::FloatRect({ 0,0 }, { 200,200 });
+		secondaryHitbox_ = sf::FloatRect({ 0,0 }, { 60,60 }); //the secondary hitbox should always be the smaller one so we only need to check for secondary hitbox interactions when the primary hitbox is already intersecting with something
+		break;
+
+	case GameObject::EntityType::BULLET:
+		collider_ = sf::FloatRect({ 0,0 }, { 3,3 });
+		hitbox_ = sf::FloatRect({ 0,0 }, { 5,5 });
+		break;
+
+	case GameObject::EntityType::DOOR:
+		collider_ = sf::FloatRect({ 0,0 }, { 100,100 });
+		m_isSolid = true;
+		hitbox_ = sf::FloatRect({ 0,0 }, { 100,100 });
+		break;
+
+	case GameObject::EntityType::WALL:
+		collider_ = sf::FloatRect({ 0,0 }, { 100,100 });
+		m_isSolid = true;
+		break;
+
+	default:
+		break;
+	}
+}
+
+
 void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<int, GameObject> & allObjs, std::map<int, PhysicsComponent> & allPComps) {
 
 	//set every entity's collider position
@@ -72,7 +110,7 @@ void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<i
 	for (auto const& [id, otherPhysComp] : allPComps)
 	{		
 		//conditions: only check for collisions with PhysicsComponents that have solid colliders, and don't check for collisions with yourself
-		if (otherPhysComp.solid_ && otherPhysComp.collider_ != collider_)
+		if (otherPhysComp.m_isSolid && otherPhysComp.collider_ != collider_)
 		{
 			//check for overlap with the other collider
 			if (collider_.findIntersection(otherPhysComp.collider_))
@@ -185,7 +223,7 @@ void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameOb
 					//a bullet is intersecting with a door
 					case GameObject::EntityType::DOOR:
 						//check if the door is solid (if the door is already broken, there is no interaction)
-						if (pComp.solid_) 
+						if (pComp.m_isSolid) 
 						{
 							//destroy the bullet
 							obj.Destroy();
@@ -193,7 +231,7 @@ void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameOb
 							//tell the door to play a sound, switch its animation, and make its collider non-solid
 							allObjs.at(id).NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
 							allObjs.at(id).AddAnimationToStack("break", 0);
-							pComp.solid_ = false;
+							pComp.m_isSolid = false;
 						}
 						break;
 					}

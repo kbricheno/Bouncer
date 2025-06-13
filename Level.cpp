@@ -187,10 +187,10 @@ void Level::GenerateLevel(const int tileSize, const std::vector<char>& levelPlan
 }
 
 //Create a new bullet
-void Level::SpawnBullet(sf::Vector2f const startPos, sf::Vector2f const startDir) {
+void Level::SpawnBullet(sf::Vector2f const inStartPos, sf::Vector2f const inStartDir) {
 
 	//create GameObject
-	GameObject bulletObj(GameObject::EntityType::BULLET, startPos, sf::Vector2f(), "idle", startDir);
+	GameObject bulletObj(GameObject::EntityType::BULLET, inStartPos, sf::Vector2f(), "idle", inStartDir);
 
 	//create Components
 	ControllerComponent cComp;
@@ -217,7 +217,7 @@ void Level::CleanUpDeadEntities()
 
 	for (auto& [id, obj] : gameObjects_)
 	{
-		if (obj.CheckTaggedForDestruction()) {
+		if (obj.IsTaggedForDestruction()) {
 
 			indexesToBeDeleted.push_back(id);
 
