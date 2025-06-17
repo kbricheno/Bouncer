@@ -12,6 +12,7 @@ public:
 	//Update is called by the Level instance once per frame
 	void Update(GameObject& obj);
 
+	static float m_globalVolume; //determines the volume for the entire game
 
 private:
 	//Switches out m_sound's SoundBuffer and plays the audio

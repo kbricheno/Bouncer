@@ -1,5 +1,7 @@
 #include "AudioComponent.h"
 
+float AudioComponent::m_globalVolume = 1.f;
+
 void AudioComponent::Update(GameObject &obj) {
 	
 	//check if there's a sound to be played this frame
@@ -42,5 +44,6 @@ void AudioComponent::Update(GameObject &obj) {
 
 void AudioComponent::PlaySound(std::string inSoundName) {
 	m_sound.setBuffer(m_soundBuffersRef.at(inSoundName));
+	m_sound.setVolume(m_globalVolume * 100.f);
 	m_sound.play();
 }

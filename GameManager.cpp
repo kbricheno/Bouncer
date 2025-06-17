@@ -359,8 +359,11 @@ bool GameManager::GenerateTextures() {
 	m_buttonImages.insert({ "mainMenu", mainMenuImages });
 
 	sf::Texture volumeKnobTexture;
+	sf::Texture volumeKnobHoveredTexture;
 	if (!volumeKnobTexture.loadFromFile("Assets/UI/barKnob.png")) return false;
+	if (!volumeKnobHoveredTexture.loadFromFile("Assets/UI/barKnobHover.png")) return false;
 	volumeKnobImages.insert({ "unhovered", volumeKnobTexture });
+	volumeKnobImages.insert({ "hovered", volumeKnobHoveredTexture });
 
 	m_buttonImages.insert({ "volumeKnob", volumeKnobImages });
 
@@ -478,17 +481,8 @@ void GameManager::SetupMainMenu() {
 	m_activeMenuButtons.insert({ "howToPlay", howToPlayButton });
 	m_activeMenuButtons.insert({ "quit", quitButton });
 
-	//volume slider
-	//create the background for the volume slider
-	sf::Sprite volumeBackground(m_menuImages.at("volume"));
-	volumeBackground.setOrigin(volumeBackground.getLocalBounds().size / 2.f);
-	volumeBackground.setPosition(sf::Vector2f(m_menuView.getCenter().x - buttonSize.x / 2.f, m_menuView.getCenter().y));
-	m_activeMenuImages.push_back(volumeBackground);
-
-	//create and add the button for the volume slider
-	sf::Vector2f knobSize = (sf::Vector2f)m_buttonImages.at("volumeKnob").at("unhovered").getSize();
-	Button volumeKnob(m_buttonImages.at("volumeKnob"), volumeBackground.getGlobalBounds().position + knobSize, volumeBackground.getGlobalBounds().position.x, volumeBackground.getGlobalBounds().size.x);
-	m_activeMenuButtons.insert({ "volumeKnob", volumeKnob });
+	//create a volume slider
+	CreateVolumeSlider(sf::Vector2f(m_menuView.getCenter().x - buttonSize.x / 2.f, m_menuView.getCenter().y));
 }
 
 void GameManager::SetupHowToPlay() {
@@ -522,17 +516,8 @@ void GameManager::SetupPause() {
 	m_activeMenuButtons.insert({ "continue", continueButton });
 	m_activeMenuButtons.insert({ "mainMenu", mainMenuButton });
 
-	//volume slider
-	//create the background for the volume slider
-	sf::Sprite volumeBackground(m_menuImages.at("volume"));
-	volumeBackground.setOrigin(volumeBackground.getLocalBounds().size / 2.f);
-	volumeBackground.setPosition(sf::Vector2f(m_menuView.getCenter().x - buttonSize.x / 2.f, m_menuView.getCenter().y - buttonSize.y));
-	m_activeMenuImages.push_back(volumeBackground);
-
-	//create and add the button for the volume slider
-	sf::Vector2f knobSize = (sf::Vector2f)m_buttonImages.at("volumeKnob").at("unhovered").getSize();
-	Button volumeKnob(m_buttonImages.at("volumeKnob"), volumeBackground.getGlobalBounds().position + knobSize, volumeBackground.getGlobalBounds().position.x, volumeBackground.getGlobalBounds().size.x);
-	m_activeMenuButtons.insert({ "volumeKnob", volumeKnob });
+	//create a volume slider
+	CreateVolumeSlider(sf::Vector2f(m_menuView.getCenter().x - buttonSize.x / 2.f, m_menuView.getCenter().y - buttonSize.y));
 
 	//add the "paused" text
 	sf::Text pausedText(m_fontRef);
@@ -616,27 +601,6 @@ void GameManager::UpdateLevelHud() {
 	m_activeMenuText[1].setPosition({ m_menuView.getSize().x - m_activeMenuText[1].getLocalBounds().size.x - 40.f, 20.f });
 }
 
-void GameManager::UpdateVolumeSlider(sf::Vector2f const inMousePos) {
-
-	//create a local variable for the volume knob Button (for readability)
-	Button volumeKnob = m_activeMenuButtons.at("volumeKnob");
-
-	//determine the X position based on the mouse's X position clamped within the bounds of the volume slider
-	float posX = inMousePos.x;
-	if (posX > volumeKnob.GetMaxX()) posX = volumeKnob.GetMaxX();
-	else if (posX < volumeKnob.GetMinX()) posX = volumeKnob.GetMinX();
-
-	//the Y position will remain the same
-	float posY = m_activeMenuButtons.at("volumeKnob").GetSprite().getPosition().y;
-
-	//set the volume knob Button's position accordingly
-	m_activeMenuButtons.at("volumeKnob").GetSprite().setPosition({ posX, posY });
-
-	//generate a volume value from the position of the volume knob relative to its slider
-	float volume = (volumeKnob.GetSprite().getPosition().x - volumeKnob.GetMinX()) / (volumeKnob.GetMaxX() - volumeKnob.GetMinX());
-	std::cout << volume;
-}
-
 void GameManager::DrawMenu() {
 
 	//set the view to be drawn to
@@ -661,6 +625,48 @@ void GameManager::DrawMenu() {
 		
 		m_windowRef.draw(button.GetSprite());
 	}
+}
+
+void GameManager::CreateVolumeSlider(sf::Vector2f const inStartPos) {
+
+	//create the background image for the volume slider, set its position, add it to the active images vector
+	sf::Sprite volumeBackground(m_menuImages.at("volume"));
+	volumeBackground.setPosition(inStartPos);
+	m_activeMenuImages.push_back(volumeBackground);
+
+	//create a shorthand variable for the size of the volume Button just for readability
+	sf::Vector2f volumeButtonSize = (sf::Vector2f)m_buttonImages.at("volumeKnob").at("unhovered").getSize();
+
+	//calculate the variables needed for the volume Button constructor
+	float minXPos = volumeBackground.getPosition().x + volumeButtonSize.x / 2.f;
+	float maxXPos = volumeBackground.getPosition().x + volumeBackground.getLocalBounds().size.x - volumeButtonSize.x / 2.f;
+	float startPosX = AudioComponent::m_globalVolume * (maxXPos - minXPos) + minXPos; //the x starting position varies depending on the current global volume
+	float startPosY = volumeBackground.getPosition().y + volumeBackground.getLocalBounds().size.y - volumeButtonSize.y;
+
+	//create a slider Button variant, passing in its Textures, starting position, min x position, and max x position -- then add it to the active buttons vector
+	Button volumeKnob(m_buttonImages.at("volumeKnob"), { startPosX - volumeButtonSize.x / 2.f, startPosY }, minXPos, maxXPos);
+	m_activeMenuButtons.insert({ "volumeKnob", volumeKnob });
+}
+
+void GameManager::ChangeVolume(sf::Vector2f const inMousePos) {
+
+	//create a local variable for the volume knob Button (for readability)
+	Button volumeKnob = m_activeMenuButtons.at("volumeKnob");
+
+	//determine the X position based on the mouse's X position clamped within the bounds of the volume slider
+	float posX = inMousePos.x;
+	if (posX > volumeKnob.GetMaxX()) posX = volumeKnob.GetMaxX();
+	else if (posX < volumeKnob.GetMinX()) posX = volumeKnob.GetMinX();
+
+	//the Y position will remain the same
+	float posY = m_activeMenuButtons.at("volumeKnob").GetSprite().getPosition().y;
+
+	//set the volume knob Button's position accordingly
+	m_activeMenuButtons.at("volumeKnob").GetSprite().setPosition({ posX - volumeKnob.GetSprite().getLocalBounds().size.x / 2.f, posY });
+
+	//generate a volume value from the position of the volume knob relative to its slider
+	AudioComponent::m_globalVolume = (posX - volumeKnob.GetMinX()) / (volumeKnob.GetMaxX() - volumeKnob.GetMinX());
+	std::cout << AudioComponent::m_globalVolume << "\n";
 }
 
 #pragma endregion
@@ -723,7 +729,6 @@ void GameManager::HandleEventQueue() {
 				break;
 			}
 		}
-
 		//mouse click events
 		else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>())
 		{
@@ -759,7 +764,7 @@ void GameManager::HandleEventQueue() {
 							}
 							if (name == "volumeKnob")
 							{
-								UpdateVolumeSlider(mousePos);
+								m_isChangingVolume = true;
 								break;
 							}
 							if (name == "quit") 
@@ -796,6 +801,11 @@ void GameManager::HandleEventQueue() {
 							if (name == "continue")
 							{
 								SetupLevelHud();
+								break;
+							}
+							if (name == "volumeKnob")
+							{
+								m_isChangingVolume = true;
 								break;
 							}
 							if (name == "mainMenu")
@@ -845,6 +855,19 @@ void GameManager::HandleEventQueue() {
 
 				default:
 					break;
+				}
+			}
+		}
+
+		//only bother checking for a mouse button release event if the volume is currently being changed
+		if (m_isChangingVolume) 
+		{
+			if (const auto* mouseButtonReleased = event->getIf<sf::Event::MouseButtonReleased>())
+			{
+				if (mouseButtonReleased->button == sf::Mouse::Button::Left)
+				{
+					//stop updating the volume slider
+					m_isChangingVolume = false;
 				}
 			}
 		}
@@ -942,6 +965,9 @@ void GameManager::Update(float const deltaTime) {
 			SetupLevelFailed("You shot yourself!");
 		}
 	}
+	
+	//if currently clicking in a volume slider, update it
+	if (m_isChangingVolume) ChangeVolume(m_windowRef.mapPixelToCoords(sf::Mouse::getPosition(), m_menuView));
 }
 
 void GameManager::Draw(float const deltaTime) {

@@ -1,11 +1,7 @@
 // Bouncer.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <iostream>
 #include <fstream>
-#include <SFML/Graphics.hpp>
-#include <SFML/System.hpp>
-#include <SFML/Window.hpp>
 #include "GameManager.h"
 
 int main()
@@ -13,7 +9,7 @@ int main()
     //create some variables needed for the game's setup
     sf::Clock clock;
     sf::VideoMode videoMode(sf::VideoMode::getDesktopMode().size);
-    sf::RenderWindow window(videoMode, "Bouncer", sf::Style::Close);
+    sf::RenderWindow window(videoMode, "Bouncer", sf::Style::Close, sf::State::Fullscreen);
     window.setKeyRepeatEnabled(false); //turn off key repeat to prevent multiple key press events being triggered by holding a key down
     sf::Font font("Assets/UI/AGENCYR.ttf");
     std::ifstream levelsFile("Assets/levels.txt");

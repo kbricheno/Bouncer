@@ -11,7 +11,7 @@ public:
 	~Button() {}
 
 	//Get the Button's Sprite for drawing and position altering
-	sf::Sprite GetSprite() { return m_sprite; }
+	sf::Sprite& const GetSprite() { return m_sprite; }
 
 	//Get the X boundaries that the bar slider Button is allowed to move within
 	float GetMinX() { return m_minXPos; }

@@ -70,6 +70,8 @@ private:
 	std::map<std::string, std::map<std::string, sf::Texture>> m_buttonImages; //map of Textures used to create Buttons for menus
 	std::map<std::string, Button> m_activeMenuButtons; //vector of Buttons that need to be drawn this frame
 	std::vector<sf::Text> m_activeMenuText; //vector of Text objects that need to be drawn this frame
+
+	bool m_isChangingVolume = false;
 	
 	//Clear any existing background image, buttons, and text objects currently stored
 	void ClearMenu();
@@ -85,10 +87,14 @@ private:
 	
 	//Only the HUD has variables that update over time -- all other menus only need to be set up and then drawn.
 	void UpdateLevelHud();
-	void UpdateVolumeSlider(sf::Vector2f const inMousePos);
 	
 	//Draw the currently-active menu objects
 	void DrawMenu();
+
+	//Create a volume slider
+	void CreateVolumeSlider(sf::Vector2f const inStartPos);
+	//Update the volume slider, which sets the AudioComponent's static global volume variable
+	void ChangeVolume(sf::Vector2f const inMousePos);
 
 
 	//USER INPUT - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
