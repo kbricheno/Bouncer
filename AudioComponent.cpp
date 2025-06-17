@@ -3,19 +3,17 @@
 void AudioComponent::Update(GameObject &obj) {
 	
 	//check if there's a sound to be played this frame
-	if (obj.CheckSoundEvent() != GameObject::SoundEvent::NONE) 
+	if (obj.GetSoundEvent() != GameObject::SoundEvent::NONE) 
 	{
-		GameObject::SoundEvent event = obj.CheckSoundEvent();
+		GameObject::SoundEvent event = obj.GetSoundEvent();
 		switch (event)
 		{
-		case GameObject::SoundEvent::CHARACTER_SHOOT:
-			sounds_[0].setBuffer(soundEffects_["shoot"]);
-			sounds_[0].play();
+		case GameObject::SoundEvent::HERO_SHOOT:
+			PlaySound("shoot");
 			break;
 
-		case GameObject::SoundEvent::CHARACTER_RELOAD:
-			sounds_[0].setBuffer(soundEffects_["reload"]);
-			sounds_[0].play();
+		case GameObject::SoundEvent::HERO_RELOAD:
+			PlaySound("reload");
 			break;
 
 		case GameObject::SoundEvent::BULLET_COLLISION:
@@ -23,30 +21,26 @@ void AudioComponent::Update(GameObject &obj) {
 			switch (obj.GetType())
 			{
 			case GameObject::EntityType::ENEMY:
-				sounds_[0].setBuffer(soundEffects_["die"]);
-				sounds_[0].play();
+				PlaySound("die");
 				break;
 
 			case GameObject::EntityType::DOOR:
-				sounds_[0].setBuffer(soundEffects_["break"]);
-				sounds_[0].play();
-				break;
-
-			default:
+				PlaySound("break");
 				break;
 			}
 			break;
 
 		case GameObject::SoundEvent::SOLID_COLLISION:
-			sounds_[0].setBuffer(soundEffects_["bounce"]);
-			sounds_[0].play();
-			break;
-
-		default:
+			PlaySound("bounce");
 			break;
 		}
 
 		//reset the sound event
 		obj.NotifySoundEvent(GameObject::SoundEvent::NONE);
 	}
+}
+
+void AudioComponent::PlaySound(std::string inSoundName) {
+	m_sound.setBuffer(m_soundBuffersRef.at(inSoundName));
+	m_sound.play();
 }

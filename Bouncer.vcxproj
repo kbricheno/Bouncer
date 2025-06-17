@@ -146,7 +146,6 @@
     <ClCompile Include="Level.cpp" />
     <ClCompile Include="PhysicsComponent.cpp" />
     <ClCompile Include="GameManager.cpp" />
-    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="VisualComponent.cpp" />
   </ItemGroup>
   <ItemGroup>

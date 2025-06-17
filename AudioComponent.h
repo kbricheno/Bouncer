@@ -1,18 +1,22 @@
 #pragma once
 #include <SFML/Audio.hpp>
 #include <map>
-
 #include "GameObject.h"
 
 class AudioComponent {
 public:
-	AudioComponent(std::map<std::string, sf::SoundBuffer> const &soundEffects) : soundEffects_(soundEffects) {}
+	//Create an AudioComponent, passing in a reference to the map of SoundBuffers generated in GameManager
+	AudioComponent(std::map<std::string, sf::SoundBuffer>& const inSoundBuffers) : m_soundBuffersRef(inSoundBuffers) {}
 	~AudioComponent() {}
 
+	//Update is called by the Level instance once per frame
 	void Update(GameObject& obj);
 
+
 private:
-	std::map<std::string, sf::SoundBuffer> soundEffects_;
-	std::array<sf::Sound, 1> sounds_ = {sf::Sound(soundEffects_.begin()->second)}; //there's only one sound per entity but have to use an array because you can't make an empty container for a single object
-	GameObject obj;
+	//Switches out m_sound's SoundBuffer and plays the audio
+	void PlaySound(std::string inSoundName);
+
+	std::map<std::string, sf::SoundBuffer>& const m_soundBuffersRef; //reference to all SoundBuffers
+	sf::Sound m_sound = sf::Sound(m_soundBuffersRef.begin()->second); //sf::Sound doesn't have a default constructor so just pass in the first SoundBuffer for now
 };

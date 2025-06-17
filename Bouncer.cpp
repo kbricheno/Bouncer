@@ -10,40 +10,32 @@
 
 int main()
 {
+    //create some variables needed for the game's setup
     sf::Clock clock;
-
-    sf::VideoMode vMode(sf::VideoMode::getDesktopMode().size);
-    sf::RenderWindow window(vMode, "Bouncer", sf::Style::Close);
-    window.setKeyRepeatEnabled(false);
-
+    sf::VideoMode videoMode(sf::VideoMode::getDesktopMode().size);
+    sf::RenderWindow window(videoMode, "Bouncer", sf::Style::Close);
+    window.setKeyRepeatEnabled(false); //turn off key repeat to prevent multiple key press events being triggered by holding a key down
+    sf::Font font("Assets/UI/AGENCYR.ttf");
     std::ifstream levelsFile("Assets/levels.txt");
 
-    //debug text
-    sf::Font f("Assets/UI/AGENCYR.ttf");
-    sf::Text debugText(f);
-
-    GameManager gm(window, f);
-    gm.PrepareLevelGeneration(levelsFile);
+    //create a GameManager instance and tell it to set up the level plans, sounds, and textures needed for creating levels
+    GameManager manager(window, font);
+    manager.PrepareLevelGeneration(levelsFile);
 
     while (window.isOpen()) 
     {
-        sf::Time deltaTime = clock.restart();
+        sf::Time deltaTime = clock.restart(); //restart the clock to obtain the elapsed time between this frame and the last
 
         //handle input
-        gm.HandleInput(deltaTime.asSeconds());
+        manager.HandleInput(deltaTime.asSeconds()); //tell the GameManager instance to receive and handle the user's input
 
         //update
-        debugText.setFont(f);
-        debugText.setCharacterSize(50);
-        debugText.setPosition({ 500, 500 });
-        debugText.setString("");
-        gm.Update(deltaTime.asSeconds());
+        manager.Update(deltaTime.asSeconds()); //tell the GameManager instance to update every object
 
         //draw
-        window.clear(sf::Color::Color(0,0,0));
-        gm.Draw(deltaTime.asSeconds());
-        window.draw(debugText);
-        window.display();
+        window.clear(sf::Color::Black); //clear the next buffer using black
+        manager.Draw(deltaTime.asSeconds()); //tell the GameManager instance to draw everything to the next buffer
+        window.display(); //flip the buffer
     }
 
     return 0;

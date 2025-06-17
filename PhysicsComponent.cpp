@@ -1,76 +1,72 @@
 #include "PhysicsComponent.h"
 #include <iostream>
 
-PhysicsComponent::PhysicsComponent(GameObject::EntityType type, float const speed) : speed_(speed) 
+PhysicsComponent::PhysicsComponent(GameObject::EntityType const inEntityType, float const inMoveSpeed) : m_speed(inMoveSpeed) 
 {
 	//create a collider and/or hitbox for each type of physics-affected entity
-	switch (type)
+	switch (inEntityType)
 	{
-	case GameObject::EntityType::CHARACTER:
-		collider_ = sf::FloatRect({ 0,0 }, { 40,40 }); //presence of a collider means this object interacts with other colliders
-		hitbox_ = sf::FloatRect({ 0,0 }, { 45,45 }); //presence of a hitbox means this object interacts with other hitboxes
+	case GameObject::EntityType::HERO:
+		m_collider = sf::FloatRect({ 0,0 }, { 40,40 }); //presence of a collider means this object interacts with other colliders
+		m_hitbox = sf::FloatRect({ 0,0 }, { 45,45 }); //presence of a hitbox means this object interacts with other hitboxes
 		break;
 
 	case GameObject::EntityType::ENEMY:
-		collider_ = sf::FloatRect({ 0,0 }, { 50,50 });
-		hitbox_ = sf::FloatRect({ 0,0 }, { 200,200 });
-		secondaryHitbox_ = sf::FloatRect({ 0,0 }, { 60,60 }); //the secondary hitbox should always be the smaller one so we only need to check for secondary hitbox interactions when the primary hitbox is already intersecting with something
+		m_collider = sf::FloatRect({ 0,0 }, { 50,50 });
+		m_hitbox = sf::FloatRect({ 0,0 }, { 200,200 });
+		m_secondaryHitbox = sf::FloatRect({ 0,0 }, { 60,60 }); //the secondary hitbox should always be the smaller one so we only need to check for secondary hitbox interactions when the primary hitbox is already intersecting with something
 		break;
 
 	case GameObject::EntityType::BULLET:
-		collider_ = sf::FloatRect({ 0,0 }, { 3,3 });
-		hitbox_ = sf::FloatRect({ 0,0 }, { 5,5 });
+		m_collider = sf::FloatRect({ 0,0 }, { 3,3 });
+		m_hitbox = sf::FloatRect({ 0,0 }, { 5,5 });
 		break;
 
 	case GameObject::EntityType::DOOR:
-		collider_ = sf::FloatRect({ 0,0 }, { 100,100 });
+		m_collider = sf::FloatRect({ 0,0 }, { 100,100 });
 		m_isSolid = true;
-		hitbox_ = sf::FloatRect({ 0,0 }, { 100,100 });
+		m_hitbox = sf::FloatRect({ 0,0 }, { 100,100 });
 		break;
 
 	case GameObject::EntityType::WALL:
-		collider_ = sf::FloatRect({ 0,0 }, { 100,100 });
+		m_collider = sf::FloatRect({ 0,0 }, { 100,100 });
 		m_isSolid = true;
-		break;
-
-	default:
 		break;
 	}
 }
 
-
-void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<int, GameObject> & allObjs, std::map<int, PhysicsComponent> & allPComps) {
+void PhysicsComponent::Update(GameObject& obj, float const deltaTime, std::map<int, GameObject>& allObjsRef, std::map<int, PhysicsComponent>& allPCompsRef) {
 
 	//set every entity's collider position
-	collider_.position = obj.GetColliderPosition();
+	m_collider.position = obj.GetColliderPosition();
 
 	//set every entity's hitbox position (hitboxes extend slightly further than colliders to ensure objects can interact)
-	hitbox_.position = obj.GetColliderPosition() + (collider_.size - hitbox_.size) / 2.f;
-	secondaryHitbox_.position = obj.GetColliderPosition() + (collider_.size - secondaryHitbox_.size) / 2.f;
+	m_hitbox.position = obj.GetColliderPosition() + (m_collider.size - m_hitbox.size) / 2.f;
+	m_secondaryHitbox.position = obj.GetColliderPosition() + (m_collider.size - m_secondaryHitbox.size) / 2.f;
 
 	//set every entity's center position (used to draw the sprite if this object has a VisualComponent)
-	obj.SetCenter(collider_.position + (collider_.size / 2.f));
+	obj.SetCenter(m_collider.position + (m_collider.size / 2.f));
 
 	//some entities move and/or interact with other entities
 	switch (obj.GetType())
 	{
-	case GameObject::EntityType::CHARACTER:
-		Move(obj, deltaTime, allPComps);
-		ResolveInteractions(obj, allObjs, allPComps);
+	case GameObject::EntityType::HERO:
+		Move(obj, deltaTime, allPCompsRef);
+		ResolveInteractions(obj, allObjsRef, allPCompsRef);
 		break;
 
 	case GameObject::EntityType::ENEMY:
-		Move(obj, deltaTime, allPComps);
-		ResolveInteractions(obj, allObjs, allPComps);
+		Move(obj, deltaTime, allPCompsRef);
+		ResolveInteractions(obj, allObjsRef, allPCompsRef);
 		break;
 
 	case GameObject::EntityType::BULLET:
-		Move(obj, deltaTime, allPComps);
-		ResolveInteractions(obj, allObjs, allPComps);
+		Move(obj, deltaTime, allPCompsRef);
+		ResolveInteractions(obj, allObjsRef, allPCompsRef);
 		break;
 
 	case GameObject::EntityType::DOOR:
-		ResolveInteractions(obj, allObjs, allPComps);
+		ResolveInteractions(obj, allObjsRef, allPCompsRef);
 		break;
 
 	default:
@@ -78,23 +74,23 @@ void PhysicsComponent::Update(GameObject &obj, float const deltaTime, std::map<i
 	}
 }
 
-void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int, PhysicsComponent>& allPComps) {
+void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int, PhysicsComponent>& allPCompsRef) {
 	//don't run move code if move input (direction) is empty
 	if (obj.GetDirection() == sf::Vector2f{ 0, 0 }) return;
 
 	//normalization used to prevent the object moving faster diagonally
-	//deltaTime used to maintain the object's speed regardless of frameratef
-	float newPosX = obj.GetColliderPosition().x + (obj.GetDirection().normalized().x * speed_ * deltaTime);
-	float newPosY = obj.GetColliderPosition().y + (obj.GetDirection().normalized().y * speed_ * deltaTime);
+	//deltaTime used to maintain the object's speed regardless of framerate
+	float newPosX = obj.GetColliderPosition().x + (obj.GetDirection().normalized().x * m_speed * deltaTime);
+	float newPosY = obj.GetColliderPosition().y + (obj.GetDirection().normalized().y * m_speed * deltaTime);
 
-	if (collider_ != sf::FloatRect()) //if this object has a collider -- collider does not equal a FloatRect of (0,0),(0,0)
+	if (m_collider != sf::FloatRect()) //if this object has a collider -- collider does not equal a FloatRect of (0,0),(0,0)
 	{
 		//move this collider using proposed positions, then immediately check collisions to validate position
 		//check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
-		collider_.position = { newPosX, obj.GetColliderPosition().y };
-		ResolveCollisions(obj, true, allPComps);
-		collider_.position = { obj.GetColliderPosition().x, newPosY };
-		ResolveCollisions(obj, false, allPComps);
+		m_collider.position = { newPosX, obj.GetColliderPosition().y };
+		ResolveCollisions(obj, true, allPCompsRef);
+		m_collider.position = { obj.GetColliderPosition().x, newPosY };
+		ResolveCollisions(obj, false, allPCompsRef);
 	}
 	else 
 	{
@@ -102,40 +98,40 @@ void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int
 	}
 }
 
-void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<int, PhysicsComponent>& allPComps) {
+void PhysicsComponent::ResolveCollisions(GameObject& obj, bool inIsValidatingXAxis, std::map<int, PhysicsComponent>& allPCompsRef) {
 
 	bool collisionDetected = false;
 
 	//loop through all PhysicsComponents
-	for (auto const& [id, otherPhysComp] : allPComps)
+	for (auto const& [id, otherPhysComp] : allPCompsRef)
 	{		
 		//conditions: only check for collisions with PhysicsComponents that have solid colliders, and don't check for collisions with yourself
-		if (otherPhysComp.m_isSolid && otherPhysComp.collider_ != collider_)
+		if (otherPhysComp.m_isSolid && otherPhysComp.m_collider != m_collider)
 		{
 			//check for overlap with the other collider
-			if (collider_.findIntersection(otherPhysComp.collider_))
+			if (m_collider.findIntersection(otherPhysComp.m_collider))
 			{
 				collisionDetected = true;
 
 				//create floats ready to push this collider out of the other collider
-				float pushedOutX = collider_.position.x, pushedOutY = collider_.position.y;
+				float pushedOutX = m_collider.position.x, pushedOutY = m_collider.position.y;
 
-				if (xAxis) //check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
+				if (inIsValidatingXAxis) //check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
 				{
 					if (obj.GetDirection().x > 0) // moving right
 					{
 						//TODO: update this when we swap to using rects' centers as their origins/positions
-						pushedOutX = otherPhysComp.collider_.position.x - collider_.size.x;
+						pushedOutX = otherPhysComp.m_collider.position.x - m_collider.size.x;
 					}
 					else if (obj.GetDirection().x < 0) // moving left
 					{
-						pushedOutX = otherPhysComp.collider_.position.x + otherPhysComp.collider_.size.x;
+						pushedOutX = otherPhysComp.m_collider.position.x + otherPhysComp.m_collider.size.x;
 					}
 
 					//some entities have additional behaviour when they collide with a solid object
 					if (obj.GetType() == GameObject::EntityType::BULLET || obj.GetType() == GameObject::EntityType::ENEMY)
 					{
-						obj.NotifyHorizontalCollision(true);
+						obj.NotifyHorizontalCollisionEvent(true);
 					}
 				}
 
@@ -143,17 +139,17 @@ void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<i
 				{
 					if (obj.GetDirection().y > 0) // moving down
 					{
-						pushedOutY = otherPhysComp.collider_.position.y - collider_.size.y;
+						pushedOutY = otherPhysComp.m_collider.position.y - m_collider.size.y;
 					}
 					else if (obj.GetDirection().y < 0) // moving up
 					{
-						pushedOutY = otherPhysComp.collider_.position.y + otherPhysComp.collider_.size.y;
+						pushedOutY = otherPhysComp.m_collider.position.y + otherPhysComp.m_collider.size.y;
 					}
 
 					//some entities have additional behaviour when they collide with a solid object
 					if (obj.GetType() == GameObject::EntityType::BULLET || obj.GetType() == GameObject::EntityType::ENEMY)
 					{
-						obj.NotifyVerticalCollision(true);
+						obj.NotifyVerticalCollisionEvent(true);
 					}
 				}
 				//return the corrected position coordinates
@@ -163,19 +159,18 @@ void PhysicsComponent::ResolveCollisions(GameObject &obj, bool xAxis, std::map<i
 	}
 
 	//if there was no collision, return this collider's position
-	if (!collisionDetected) obj.SetColliderPosition(collider_.position);
+	if (!collisionDetected) obj.SetColliderPosition(m_collider.position);
 }
 
-//Detect intersections between hitboxes, perform interaction checks, then resolve the interaction
-void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameObject>& allObjs, std::map<int, PhysicsComponent>& allPComps) {
+void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameObject>& allObjsRef, std::map<int, PhysicsComponent>& allPCompsRef) {
 	
 	//iterate through all the PhysicsComponents
-	for (auto& [id, pComp] : allPComps)
+	for (auto& [id, pComp] : allPCompsRef)
 	{
 		//don't check for interactions with yourself
-		if (pComp.hitbox_ != hitbox_)
+		if (pComp.m_hitbox != m_hitbox)
 		{
-			if (hitbox_.findIntersection(pComp.hitbox_))
+			if (m_hitbox.findIntersection(pComp.m_hitbox))
 			{
 				/*
 				When an intersection between any two hitboxes is detected, perform 4 actions:
@@ -189,33 +184,33 @@ void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameOb
 				switch (obj.GetType())
 				{
 				case GameObject::EntityType::BULLET: //1) this entity's type is BULLET
-					switch (allObjs.at(id).GetType())
+					switch (allObjsRef.at(id).GetType())
 					{
-					case GameObject::EntityType::CHARACTER: //2) the other entity's type is CHARACTER
+					case GameObject::EntityType::HERO: //2) the other entity's type is HERO
 						if (obj.GetBulletBounceCount() > 0)	//3) check the condition: the bullet must have bounced at least once (prevents this from triggering on bullet spawn)
 						{
 							//4) destroy this entity (the bullet)
-							obj.Destroy();
+							obj.TagForDestruction();
 
-							//4) notify the other entity (character) it was hit by a bullet
-							allObjs.at(id).NotifyHitByBullet(true);
+							//4) notify the other entity (hero) it was hit by a bullet
+							allObjsRef.at(id).NotifyHitByBulletEvent(true);
 						}					
 						break;
 
 					//a bullet is intersecting with an enemy
 					case GameObject::EntityType::ENEMY:
 						//check the enemy is alive (dead enemies and bullets do not interact at all)
-						if (allObjs.at(id).CheckEntityAlive())
+						if (allObjsRef.at(id).IsEntityAlive())
 						{
 							//an enemy's primary hitbox is its vision detection radius -- bullets do not interact with this vision hitbox
 							//so only report interactions between a bullet and an enemy if the bullet has also intersected with the secondary hitbox (the enemy's actual body)
-							if (hitbox_.findIntersection(pComp.secondaryHitbox_))
+							if (m_hitbox.findIntersection(pComp.m_secondaryHitbox))
 							{
 								//destroy the bullet
-								obj.Destroy();
+								obj.TagForDestruction();
 							
 								//notify the enemy it was hit by a bullet
-								allObjs.at(id).NotifyHitByBullet(true);
+								allObjsRef.at(id).NotifyHitByBulletEvent(true);
 							}
 						}
 						break;
@@ -226,11 +221,11 @@ void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameOb
 						if (pComp.m_isSolid) 
 						{
 							//destroy the bullet
-							obj.Destroy();
+							obj.TagForDestruction();
 
 							//tell the door to play a sound, switch its animation, and make its collider non-solid
-							allObjs.at(id).NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
-							allObjs.at(id).AddAnimationToStack("break", 0);
+							allObjsRef.at(id).NotifySoundEvent(GameObject::SoundEvent::BULLET_COLLISION);
+							allObjsRef.at(id).AddAnimationToStack("break", 0);
 							pComp.m_isSolid = false;
 						}
 						break;
@@ -238,14 +233,14 @@ void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameOb
 					break;
 
 				case GameObject::EntityType::ENEMY:
-					switch (allObjs.at(id).GetType())
+					switch (allObjsRef.at(id).GetType())
 					{
 					//an enemy is intersecting with another enemy
 					case GameObject::EntityType::ENEMY:
 						//only handle interactions between enemies if this enemy is dead and its body (secondary hitbox) intersects with another enemy's vision radius (primary hitbox)
-						if (!obj.CheckEntityAlive()) 
+						if (!obj.IsEntityAlive()) 
 						{
-							if (secondaryHitbox_.findIntersection(pComp.hitbox_)) 
+							if (m_secondaryHitbox.findIntersection(pComp.m_hitbox)) 
 							{
 								//a dead body has been detected
 								obj.SetBodyDetected();
@@ -253,12 +248,12 @@ void PhysicsComponent::ResolveInteractions(GameObject& obj, std::map<int, GameOb
 						}
 						break;
 
-					//an enemy is intersecting with the character
-					case GameObject::EntityType::CHARACTER:
-						//if this enemy is alive, kill the character
-						if (obj.CheckEntityAlive()) 
+					//an enemy is intersecting with the hero
+					case GameObject::EntityType::HERO:
+						//if this enemy is alive, kill the hero
+						if (obj.IsEntityAlive()) 
 						{
-							allObjs.at(id).SetEntityDead();
+							allObjsRef.at(id).SetEntityDead();
 						}
 						break;
 					}

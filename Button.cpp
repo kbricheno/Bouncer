@@ -1,29 +1,29 @@
 #include "Button.h"
 
-Button::Button(std::map<std::string, sf::Texture> const& textures, sf::Vector2f const position) : textures_(textures)
+Button::Button(std::map<std::string, sf::Texture> const& inTextures, sf::Vector2f const inPos) : m_textures(inTextures)
 {
-	sprite_.setPosition(position);
+	m_sprite.setPosition(inPos);
 }
 
-Button::Button(std::map<std::string, sf::Texture> const& textures, sf::Vector2f const position, float const leftMostPos, float const rightMostPos) : textures_(textures), m_leftMostPos(leftMostPos), m_rightMostPos(rightMostPos)
+Button::Button(std::map<std::string, sf::Texture> const& inTextures, sf::Vector2f const inPos, float const inMinXPos, float const inMaxXPos) : m_textures(inTextures), m_minXPos(inMinXPos), m_maxXPos(inMaxXPos)
 {
-	sprite_.setPosition(position);
+	m_sprite.setPosition(inPos);
 }
 
 
-bool Button::CheckIsHovered(sf::Vector2f const mousePos) {
-	if (sprite_.getGlobalBounds().contains(mousePos)) 
+bool Button::CheckIsHovered(sf::Vector2f const inMousePos) {
+	if (m_sprite.getGlobalBounds().contains(inMousePos)) 
 	{
 		//also update the Sprite's Texture, if it has a "hovered" Texture
-		if (textures_.find("hovered") != textures_.end()) 
+		if (m_textures.find("hovered") != m_textures.end()) 
 		{
-			sprite_.setTexture(textures_.at("hovered"));
+			m_sprite.setTexture(m_textures.at("hovered"));
 		}
 		return true;
 	}
 	else 
 	{ 
-		sprite_.setTexture(textures_.at("unhovered"));
+		m_sprite.setTexture(m_textures.at("unhovered"));
 		return false; 
 	}
 }
