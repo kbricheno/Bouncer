@@ -18,8 +18,14 @@ int main()
     GameManager manager(window, font);
     manager.PrepareLevelGeneration(levelsFile);
 
+    //load the background music
+    sf::Music bgMusic("Assets/Sound/music.wav");
+
     while (window.isOpen()) 
     {
+        if (bgMusic.getStatus() == sf::Music::Status::Stopped) bgMusic.play(); //if the background music isn't playing, play it
+        bgMusic.setVolume(AudioComponent::m_globalVolume * 100); //set the background music's volume to the static global volume variable
+
         sf::Time deltaTime = clock.restart(); //restart the clock to obtain the elapsed time between this frame and the last
 
         //handle input

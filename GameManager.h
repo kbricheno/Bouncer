@@ -44,6 +44,7 @@ private:
 
 
 	//LEVEL GENERATION - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	
 	std::vector<std::vector<char>> m_allLevelPlans; //used in Level to determine which entity to spawn
 	std::vector<sf::Vector2i> m_allLevelSizes; //used in Level to determine the dimension of the current level
 	std::map<std::string, std::map<std::string, std::vector<sf::Texture>>> m_allAnimations; //used in Level to pass animations to entities' VisualComponents
@@ -61,7 +62,9 @@ private:
 
 
 	//MENUS & HUD - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+	
 	GameState m_state = GameState::TITLE; //which menu or level state the game is currently in
+	sf::Music alarm = sf::Music("Assets/Sound/houseAlarm.wav"); //music (long sound) to play when the hero is detected
 
 	sf::View m_menuView; //view for the menu objects to be drawn to
 
@@ -71,7 +74,7 @@ private:
 	std::map<std::string, Button> m_activeMenuButtons; //vector of Buttons that need to be drawn this frame
 	std::vector<sf::Text> m_activeMenuText; //vector of Text objects that need to be drawn this frame
 
-	bool m_isChangingVolume = false;
+	bool m_isChangingVolume = false; //enables/disables the volume slider update method
 	
 	//Clear any existing background image, buttons, and text objects currently stored
 	void ClearMenu();
@@ -98,6 +101,7 @@ private:
 
 
 	//USER INPUT - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	
 	//Handle all events from  queue -- closing window, singular key presses, mouse clicks
 	void HandleEventQueue();
 	//Handle all movement input, which consists of the WASD keys held down or released

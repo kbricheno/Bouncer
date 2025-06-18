@@ -573,6 +573,10 @@ void GameManager::SetupLevelFailed(std::string const inReasonForFailure) {
 
 	Button continueButton(m_buttonImages.at("continue"), sf::Vector2f(m_menuView.getCenter().x - buttonSize.x / 2.f, m_menuView.getSize().y - buttonSize.y * 1.5f));
 	m_activeMenuButtons.insert({ "continue", continueButton });
+
+	//play the house alarm sound
+	alarm.setVolume(AudioComponent::m_globalVolume * 100);
+	if (alarm.getStatus() == sf::Music::Status::Stopped) alarm.play();
 }
 
 void GameManager::SetupLevelHud() {
@@ -666,7 +670,6 @@ void GameManager::ChangeVolume(sf::Vector2f const inMousePos) {
 
 	//generate a volume value from the position of the volume knob relative to its slider
 	AudioComponent::m_globalVolume = (posX - volumeKnob.GetMinX()) / (volumeKnob.GetMaxX() - volumeKnob.GetMinX());
-	std::cout << AudioComponent::m_globalVolume << "\n";
 }
 
 #pragma endregion
@@ -720,6 +723,7 @@ void GameManager::HandleEventQueue() {
 			case GameManager::GameState::LEVEL_FAILED:
 				if (keyPressed->scancode == sf::Keyboard::Scancode::R)
 				{
+					alarm.stop(); //stop the alarm sound as soon as the game state is no longer LEVEL_FAILED
 					CreateLevel(m_currentLevel[0].GetLevelId());
 					SetupLevelHud();
 				}
@@ -824,6 +828,7 @@ void GameManager::HandleEventQueue() {
 					{
 						if (button.CheckIsHovered(mousePos))
 						{
+							alarm.stop(); //stop the alarm sound as soon as the game state is no longer LEVEL_FAILED
 							CreateLevel(m_currentLevel[0].GetLevelId());
 							SetupLevelHud();
 							break;
