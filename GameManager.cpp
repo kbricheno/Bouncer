@@ -10,13 +10,13 @@ bool GameManager::m_isInstantiated = false;
 void GameManager::PrepareLevelGeneration(std::ifstream& const inLevelsFile) {
     
 	//generate the level plans
-	if (!GenerateLevelPlan(inLevelsFile)) std::cout << "ERROR: Could not find the level file path, or file is blank!\n";
+	if (!GenerateLevelPlan(inLevelsFile)) std::cout << "ERROR: Could not find the level file path, or file is blank!" << std::endl;
 
 	//generate all textures
-	if (!GenerateTextures()) std::cout << "ERROR: Could not find all texture file paths!\n";
+	if (!GenerateTextures()) std::cout << "ERROR: Could not find all texture file paths!" << std::endl;
 
 	//generate all sounds
-	if (!GenerateSoundEffects()) std::cout << "ERROR: Could not find all sound effect file paths!\n";
+	if (!GenerateSoundEffects()) std::cout << "ERROR: Could not find all sound effect file paths!" << std::endl;
 
 	//prepare the view used for drawing menus and the hud
 	m_menuView.setSize((sf::Vector2f)sf::VideoMode::getDesktopMode().size);
@@ -48,9 +48,10 @@ bool GameManager::GenerateLevelPlan(std::ifstream& const inLevelsFile) {
 	std::vector<char> levelPlan;
 	char levelChar;
 
-	//some characters in the file between plans are irrelevant (names, colons, spaces, etc.), so use a bool to determine whether to write to the level plan
+	//some characters in the file between plans are irrelevant (names, colons, spaces, etc.), so use a bool to determine whether or not to write to the level plan
 	bool writing = false;
 
+	//keep a record of the size of this level (width = num chars in first row, height = num newlines, starts at 1 to account for first row)
 	sf::Vector2i levelSize = { 0,1 };
 
 	//read the external file
@@ -62,7 +63,7 @@ bool GameManager::GenerateLevelPlan(std::ifstream& const inLevelsFile) {
 			{
 				if (levelChar == '}') //end of level indicator
 				{
-					writing = false;
+					writing = false; //pause writing
 					m_allLevelPlans.push_back(levelPlan); //push the finished level plan into the vector
 					m_allLevelSizes.push_back(levelSize); //push the calculated level size into the vector
 				}
@@ -72,7 +73,7 @@ bool GameManager::GenerateLevelPlan(std::ifstream& const inLevelsFile) {
 					{
 						if (levelChar == '\n')
 						{
-							levelSize.y++; //use whitespaces to measure the level height
+							levelSize.y++; //use new lines to measure the level height
 						}
 						else 
 						{
@@ -84,9 +85,9 @@ bool GameManager::GenerateLevelPlan(std::ifstream& const inLevelsFile) {
 			}
 			else 
 			{
-				if (levelChar == '{') 
+				if (levelChar == '{') //start of level indicator
 				{
-					writing = true; //start of level indicator
+					writing = true; //continue writing
 
 					levelPlan.clear(); //clear the temporary level plan vector ready to write for this level
 					levelSize = { 0,1 }; //reset the level size ready to measure for this level
@@ -584,6 +585,7 @@ void GameManager::SetupLevelHud() {
 	m_state = GameState::IN_LEVEL;
 	ClearMenu();
 
+	//create and add the text needed for the hud
 	sf::Text ammoText(m_fontRef);
 	ammoText.setCharacterSize(50);
 	ammoText.setFillColor(sf::Color::White);
@@ -597,7 +599,7 @@ void GameManager::SetupLevelHud() {
 
 void GameManager::UpdateLevelHud() {
 
-	//while IN_LEVEL, activeText_ contains 2 identical empty sf::Text objects; ask the Level instance to assign their strings and positions
+	//while IN_LEVEL, activeMenuText contains 2 identical empty sf::Text objects; ask the Level instance to assign their strings and positions
 	m_activeMenuText[0].setString(m_currentLevel[0].GetCurrentAmmoString());
 	m_activeMenuText[0].setPosition({ 20.f, 20.f });
 
@@ -644,7 +646,7 @@ void GameManager::CreateVolumeSlider(sf::Vector2f const inStartPos) {
 	//calculate the variables needed for the volume Button constructor
 	float minXPos = volumeBackground.getPosition().x + volumeButtonSize.x / 2.f;
 	float maxXPos = volumeBackground.getPosition().x + volumeBackground.getLocalBounds().size.x - volumeButtonSize.x / 2.f;
-	float startPosX = AudioComponent::m_globalVolume * (maxXPos - minXPos) + minXPos; //the x starting position varies depending on the current global volume
+	float startPosX = AudioComponent::m_globalVolume * (maxXPos - minXPos) + minXPos; //map range: the x starting position varies depending on the current global volume
 	float startPosY = volumeBackground.getPosition().y + volumeBackground.getLocalBounds().size.y - volumeButtonSize.y;
 
 	//create a slider Button variant, passing in its Textures, starting position, min x position, and max x position -- then add it to the active buttons vector
@@ -654,7 +656,7 @@ void GameManager::CreateVolumeSlider(sf::Vector2f const inStartPos) {
 
 void GameManager::ChangeVolume(sf::Vector2f const inMousePos) {
 
-	//create a local variable for the volume knob Button (for readability)
+	//create a local variable for the volume knob Button just for readability
 	Button volumeKnob = m_activeMenuButtons.at("volumeKnob");
 
 	//determine the X position based on the mouse's X position clamped within the bounds of the volume slider
@@ -668,7 +670,7 @@ void GameManager::ChangeVolume(sf::Vector2f const inMousePos) {
 	//set the volume knob Button's position accordingly
 	m_activeMenuButtons.at("volumeKnob").GetSprite().setPosition({ posX - volumeKnob.GetSprite().getLocalBounds().size.x / 2.f, posY });
 
-	//generate a volume value from the position of the volume knob relative to its slider
+	//normalize: generate a volume value between 0 and 1 from the position of the volume knob relative to its slider
 	AudioComponent::m_globalVolume = (posX - volumeKnob.GetMinX()) / (volumeKnob.GetMaxX() - volumeKnob.GetMinX());
 }
 
@@ -711,7 +713,7 @@ void GameManager::HandleEventQueue() {
 				}
 				break;
 
-			//while the game is paused, pressing Esc unpauses the game, and Backspace returns to the main menu
+			//while the game is paused, pressing Esc unpauses the game
 			case GameManager::GameState::PAUSED:
 				if (keyPressed->scancode == sf::Keyboard::Scancode::Escape)
 				{
@@ -728,11 +730,9 @@ void GameManager::HandleEventQueue() {
 					SetupLevelHud();
 				}
 				break;
-
-			default:
-				break;
 			}
 		}
+
 		//mouse click events
 		else if (const auto* mouseButtonPressed = event->getIf<sf::Event::MouseButtonPressed>())
 		{
@@ -751,12 +751,16 @@ void GameManager::HandleEventQueue() {
 					break;
 
 				case GameManager::GameState::MAIN_MENU:
+					//loop through all the existing/active Buttons
 					for (auto& [name, button] : m_activeMenuButtons)
 					{
+						//check if the Button is being hovered over by the mouse
 						if (button.CheckIsHovered(mousePos)) 
 						{
+							//check which type of Button it is
 							if (name == "start") 
 							{
+								//perform relevant actions
 								CreateLevel(0); 
 								SetupLevelHud();
 								break;
@@ -785,6 +789,7 @@ void GameManager::HandleEventQueue() {
 					{
 						if (button.CheckIsHovered(mousePos))
 						{
+							//don't need to check what type of Button it is -- this menu only has one Button
 							CreateLevel(0);
 							SetupLevelHud();
 							break;
@@ -841,13 +846,14 @@ void GameManager::HandleEventQueue() {
 					{
 						if (button.CheckIsHovered(mousePos))
 						{
+							//create the next Level, if not currently on the final Level
 							if (m_currentLevel[0].GetLevelId() < m_allLevelPlans.size() - 1)
 							{
 								CreateLevel(m_currentLevel[0].GetLevelId() + 1);
 								SetupLevelHud();
 								break;
 							}
-							else
+							else //return to title
 							{
 								//destroy existing level
 								m_currentLevel.clear();
@@ -856,9 +862,6 @@ void GameManager::HandleEventQueue() {
 							}
 						}
 					}
-					break;
-
-				default:
 					break;
 				}
 			}
@@ -882,7 +885,7 @@ void GameManager::HandleEventQueue() {
 void GameManager::HandleMovementInput() {
 	/*
 	I avoided using Event::KeyPressed for movement input because key-held-down events are generated with a significant delay (the
-	same delay as holding a key down in a word processor). I actually switched Event key repeat off completely so it can be used 
+	same delay as holding a key down in a word processor). I actually switched event key repeat off completely so it can be used 
 	for singular key presses exclusively -- I don't want users to be able to, e.g., hold down Esc to pause/unpause constantly.
 	*/
 
@@ -934,14 +937,14 @@ void GameManager::HandleMovementInput() {
 void GameManager::HandleInput(float const deltaTime) {
     
 	HandleEventQueue();
-	if (m_currentLevel.size() > 0) HandleMovementInput();
+	if (m_currentLevel.size() > 0) HandleMovementInput(); //only acknowledge movement input if there is currently a Level instance
 }
 
 void GameManager::Update(float const deltaTime) {    
    
 	if (m_state == GameManager::GameState::IN_LEVEL) {
 
-		//update the level and level HUD
+		//update the level and level hud
 		m_currentLevel[0].Update(deltaTime);
 		UpdateLevelHud();
 

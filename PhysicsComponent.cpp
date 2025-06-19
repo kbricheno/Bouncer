@@ -1,5 +1,4 @@
 #include "PhysicsComponent.h"
-#include <iostream>
 
 PhysicsComponent::PhysicsComponent(GameObject::EntityType const inEntityType, float const inMoveSpeed) : m_speed(inMoveSpeed) 
 {
@@ -24,7 +23,7 @@ PhysicsComponent::PhysicsComponent(GameObject::EntityType const inEntityType, fl
 
 	case GameObject::EntityType::DOOR:
 		m_collider = sf::FloatRect({ 0,0 }, { 100,100 });
-		m_isSolid = true;
+		m_isSolid = true; //solid prevents other colliders from moving into this one
 		m_hitbox = sf::FloatRect({ 0,0 }, { 100,100 });
 		break;
 
@@ -37,17 +36,17 @@ PhysicsComponent::PhysicsComponent(GameObject::EntityType const inEntityType, fl
 
 void PhysicsComponent::Update(GameObject& obj, float const deltaTime, std::map<int, GameObject>& allObjsRef, std::map<int, PhysicsComponent>& allPCompsRef) {
 
-	//set every entity's collider position
+	//set the entity's collider position
 	m_collider.position = obj.GetColliderPosition();
 
-	//set every entity's hitbox position (hitboxes extend slightly further than colliders to ensure objects can interact)
+	//set the entity's hitbox position(s) based on the center position on the collider
 	m_hitbox.position = obj.GetColliderPosition() + (m_collider.size - m_hitbox.size) / 2.f;
 	m_secondaryHitbox.position = obj.GetColliderPosition() + (m_collider.size - m_secondaryHitbox.size) / 2.f;
 
-	//set every entity's center position (used to draw the sprite if this object has a VisualComponent)
+	//set the entity's center position (used to draw the Sprite if this entity has a VisualComponent)
 	obj.SetCenter(m_collider.position + (m_collider.size / 2.f));
 
-	//some entities move and/or interact with other entities
+	//some entities move and/or interact with other entities; perform different behaviour depending on the entity's type
 	switch (obj.GetType())
 	{
 	case GameObject::EntityType::HERO:
@@ -68,22 +67,20 @@ void PhysicsComponent::Update(GameObject& obj, float const deltaTime, std::map<i
 	case GameObject::EntityType::DOOR:
 		ResolveInteractions(obj, allObjsRef, allPCompsRef);
 		break;
-
-	default:
-		break;
 	}
 }
 
 void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int, PhysicsComponent>& allPCompsRef) {
-	//don't run move code if move input (direction) is empty
+	//don't run move code if direction is empty
 	if (obj.GetDirection() == sf::Vector2f{ 0, 0 }) return;
 
+	//calculate the entity's new/proposed position based on its current position, direction, and speed
 	//normalization used to prevent the object moving faster diagonally
 	//deltaTime used to maintain the object's speed regardless of framerate
 	float newPosX = obj.GetColliderPosition().x + (obj.GetDirection().normalized().x * m_speed * deltaTime);
 	float newPosY = obj.GetColliderPosition().y + (obj.GetDirection().normalized().y * m_speed * deltaTime);
 
-	if (m_collider != sf::FloatRect()) //if this object has a collider -- collider does not equal a FloatRect of (0,0),(0,0)
+	if (m_collider != sf::FloatRect()) //if the entity has a collider (aka collider does not equal a FloatRect of (0,0),(0,0))
 	{
 		//move this collider using proposed positions, then immediately check collisions to validate position
 		//check collisions on each axis independently to avoid incorrectly overwriting a position on the other axis
@@ -92,14 +89,14 @@ void PhysicsComponent::Move(GameObject& obj, float const deltaTime, std::map<int
 		m_collider.position = { obj.GetColliderPosition().x, newPosY };
 		ResolveCollisions(obj, false, allPCompsRef);
 	}
-	else 
+	else //if the entity doesn't have a collider, just move it to the proposed position
 	{
 		obj.SetColliderPosition({ newPosX, newPosY });
 	}
 }
 
 void PhysicsComponent::ResolveCollisions(GameObject& obj, bool inIsValidatingXAxis, std::map<int, PhysicsComponent>& allPCompsRef) {
-
+	//use a bool to keep track of whether or not a collision was detected
 	bool collisionDetected = false;
 
 	//loop through all PhysicsComponents
@@ -120,7 +117,6 @@ void PhysicsComponent::ResolveCollisions(GameObject& obj, bool inIsValidatingXAx
 				{
 					if (obj.GetDirection().x > 0) // moving right
 					{
-						//TODO: update this when we swap to using rects' centers as their origins/positions
 						pushedOutX = otherPhysComp.m_collider.position.x - m_collider.size.x;
 					}
 					else if (obj.GetDirection().x < 0) // moving left

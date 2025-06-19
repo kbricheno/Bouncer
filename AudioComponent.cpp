@@ -1,5 +1,6 @@
 #include "AudioComponent.h"
 
+//Define the static float that determines the volume across the entire game
 float AudioComponent::m_globalVolume = 1.f;
 
 void AudioComponent::Update(GameObject &obj) {
@@ -7,8 +8,7 @@ void AudioComponent::Update(GameObject &obj) {
 	//check if there's a sound to be played this frame
 	if (obj.GetSoundEvent() != GameObject::SoundEvent::NONE) 
 	{
-		GameObject::SoundEvent event = obj.GetSoundEvent();
-		switch (event)
+		switch (obj.GetSoundEvent())
 		{
 		case GameObject::SoundEvent::HERO_SHOOT:
 			PlaySound("shoot");
@@ -43,6 +43,7 @@ void AudioComponent::Update(GameObject &obj) {
 }
 
 void AudioComponent::PlaySound(std::string inSoundName) {
+	//set the sound's buffer based on the provided name, set the sound's volume, and play the sound
 	m_sound.setBuffer(m_soundBuffersRef.at(inSoundName));
 	m_sound.setVolume(m_globalVolume * 100.f);
 	m_sound.play();

@@ -8,7 +8,7 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 		m_currentFrame = 0;
 		m_previousAnimation = obj.GetCurrentAnimation();
 	}
-	else 
+	else //continue playing the existing animation
 	{
 		if (m_timeElapsedSinceLastFrame >= 1.f / m_animationFramerate) //1/animationFrameRate gives seconds per frame
 		{
@@ -37,7 +37,7 @@ void VisualComponent::Update(GameObject &obj, float const deltaTime) {
 	//increase the frame timer
 	m_timeElapsedSinceLastFrame += deltaTime;
 
-	//set the sprite to use the correct frame from the correct animation
+	//set the Sprite to use the correct frame from the correct animation
 	m_sprite.setTexture(m_animationsRef.at(obj.GetCurrentAnimation())[m_currentFrame]);
 			
 	//move and draw the Sprite

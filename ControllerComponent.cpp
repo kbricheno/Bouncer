@@ -30,15 +30,12 @@ void ControllerComponent::Update(GameObject &obj, float const deltaTime, sf::Vec
             BulletSolidCollision(obj, false);
         }
         break;
-
-    default:
-        break;
     }
 }
 
 #pragma region Hero-Specific Behaviour
 
-sf::Vector2f ControllerComponent::CalculateHeroDirection(GameObject &obj) {
+sf::Vector2f ControllerComponent::CalculateHeroDirection(GameObject& obj) {
     
     //start by setting the direction values to zero
     float newDirX = 0, newDirY = 0;
@@ -52,7 +49,7 @@ sf::Vector2f ControllerComponent::CalculateHeroDirection(GameObject &obj) {
     return { newDirX, newDirY };
 }
 
-sf::Angle ControllerComponent::CalculateHeroRotation(GameObject &obj, sf::Vector2f inMousePos) {
+sf::Angle ControllerComponent::CalculateHeroRotation(GameObject& obj, sf::Vector2f inMousePos) {
 
     //calculate the vector between the player and mouse
     sf::Vector2f relativePos = { inMousePos.x - obj.GetCenter().x, inMousePos.y - (obj.GetCenter().y)};
@@ -63,7 +60,6 @@ sf::Angle ControllerComponent::CalculateHeroRotation(GameObject &obj, sf::Vector
     //convert the angle from a float to a sf::Angle
     sf::Angle heroAngle = sf::radians(lookAtMouse);
 
-    //update the GameObject's rotation_ variable
     return heroAngle;
 }
 
@@ -86,7 +82,7 @@ void ControllerComponent::CalculateHeroAnimation(GameObject& obj, std::string an
     //idling and walking animations are controlled by the GameObject's direction
     if (obj.GetDirection().lengthSquared() == 0) //if there's no direction (no input), hero is idling
     {
-        //the idling animation is 0 which for every object is always at the bottom of the animation stack, looping forever
+        //the idling animation is 0 which for every entity is always at the bottom of the animation stack, looping perpetually
         //if the hero is currently walking, pop the walking animation out to enable the idling animation to play
         //idling should only ever interrupt walking, not shooting or reloading (shooting/reloading don't loop so they pop themselves out of the stack when finished)
         if (obj.GetCurrentAnimation() == "walk")
@@ -105,26 +101,25 @@ void ControllerComponent::CalculateHeroAnimation(GameObject& obj, std::string an
 }
 
 void ControllerComponent::HeroShoot(GameObject& obj) {
-
+    //set the animation
     CalculateHeroAnimation(obj, "shoot");
 
     //play a sound
     obj.NotifySoundEvent(GameObject::SoundEvent::HERO_SHOOT);
 
-    //shoot
+    //update the shoot variables
     m_timeSinceHeroLastShot = 0;
     m_heroCurrentAmmo--;
 }
 
 void ControllerComponent::HeroReload(GameObject& obj) {
-
-    //switch aniation
+    //set the animation
     CalculateHeroAnimation(obj, "reload");
 
     //play a sound
     obj.NotifySoundEvent(GameObject::SoundEvent::HERO_RELOAD);
 
-    //reload
+    //reset the ammo to max
     m_heroCurrentAmmo = m_heroMaxAmmo;
 }
 
@@ -133,7 +128,7 @@ int ControllerComponent::ValidateShootCommand(GameObject &obj) {
     //prevent bullet spam
     if (m_timeSinceHeroLastShot < m_timeBetweenHeroShots) return m_heroCurrentAmmo;
 
-    //prevent shooting when out of bullets (add UI message here)
+    //prevent shooting when out of bullets
     if (m_heroCurrentAmmo <= 0) return m_heroCurrentAmmo;
 
     //prevent shooting while reloading
@@ -168,17 +163,17 @@ int ControllerComponent::ValidateReloadCommand(GameObject &obj) {
 
 void ControllerComponent::UpdateEnemyState(GameObject& obj, float const deltaTime) {
     
-    //if the enemy is "dead", no further behaviour updates are needed
+    //if the enemy is dead, no further behaviour updates are needed
     if (m_currentEnemyState == EnemyState::DEAD) return;
 
 
-    //check if enemy "died" this frame
+    //check if enemy died this frame
     if (obj.IsEntityHitByBullet())
     {
         //perform death actions
         EnemyDie(obj);
 
-        //notify the GameObject that this enemy is "dead"
+        //notify the GameObject that this enemy is dead
         obj.SetEntityDead();
 
         //reset the notification so this doesn't trigger multiple times
@@ -258,7 +253,7 @@ void ControllerComponent::EnemyTurn(GameObject& obj) {
     //return the removed direction to the vector
     m_enemyDirections.push_back(m_currentEnemyDirection);
 
-    //update the currentDirection_ variable and the GameObject's rotation
+    //update the enemy's direction variable and the GameObject's rotation
     m_currentEnemyDirection = obj.GetDirection();
     obj.SetRotation(m_currentEnemyDirection.angle());
 }
@@ -276,18 +271,15 @@ void ControllerComponent::CalculateEnemyAnimation(GameObject& obj) {
     case EnemyState::PAUSED:
         if (obj.GetCurrentAnimation() != "idle")
         {
-            obj.RemoveAnimationFromStack();
+            obj.RemoveAnimationFromStack(); //removing the walk animation
         }
         break;
 
     case EnemyState::DEAD:
         if (obj.GetCurrentAnimation() != "die")
         {
-            obj.AddAnimationToStack("die", 3);
+            obj.AddAnimationToStack("die", 3); //loop the last frame forever
         }
-        break;
-
-    default:
         break;
     }
 }
@@ -305,7 +297,7 @@ void ControllerComponent::BulletSolidCollision(GameObject &obj, bool const inIsC
     //play a sound
     obj.NotifySoundEvent(GameObject::SoundEvent::SOLID_COLLISION);
 
-    //increase the bullet counter; if it's higher than maxBounces_, destroy the bullet
+    //increase the bullet counter; if it's higher than maxBulletBounces, destroy the bullet
     obj.SetBulletBounceCount(obj.GetBulletBounceCount() + 1);
     if (obj.GetBulletBounceCount() > m_maxBulletBounces) obj.TagForDestruction();
 }
